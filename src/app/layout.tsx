@@ -5,7 +5,7 @@ import NavigationProgress from "@/components/NavigationProgress";
 
 export const metadata: Metadata = {
   title: { default: "OrvenSMP", template: "%s | OrvenSMP" },
-  description: "OrvenSMP — Minecraft server community, posts, friends, resources and more.",
+  description: "OrvenSMP — The official community home of OrvenSMP — connect, share, make friends and stay close to the server.",
   icons: {
     icon: [
       { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
