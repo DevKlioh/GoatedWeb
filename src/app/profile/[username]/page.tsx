@@ -4,6 +4,8 @@ import Header from "@/components/Header";
 import { createClient } from "@/lib/supabase/server";
 import ProfilePosts from "@/components/ProfilePosts";
 import ProfileFollowButton from "@/components/ProfileFollowButton";
+import ProfileConnections from "@/components/ProfileConnections";
+import PresenceHeartbeat from "@/components/PresenceHeartbeat";
 
 export default async function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
@@ -11,7 +13,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const { data: { user } } = await supabase.auth.getUser();
 
   const { data: viewed } = await supabase.from("profiles")
-    .select("id,username,display_name,bio,avatar_url,created_at")
+    .select("id,username,display_name,bio,avatar_url,created_at,last_seen_at")
     .ilike("username", username).maybeSingle();
   if (!viewed) notFound();
 
@@ -39,14 +41,21 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
     const {data:f}=await supabase.from("follows").select("following_id").eq("follower_id",user.id).eq("following_id",viewed.id).maybeSingle();
     initialFollowing=!!f;
   }
+  const {data:followingRows}=await supabase.from("follows").select("following_id").eq("follower_id",viewed.id);
+  const followedIds=(followingRows||[]).map(x=>x.following_id);
+  const {data:followedPeople}=followedIds.length?await supabase.from("profiles").select("id,username,display_name,avatar_url,last_seen_at").in("id",followedIds):{data:[] as any[]};
+  const {data:backRows}=followedIds.length?await supabase.from("follows").select("follower_id").eq("following_id",viewed.id).in("follower_id",followedIds):{data:[] as any[]};
+  const back=new Set((backRows||[]).map(x=>x.follower_id));
+  const connections=(followedPeople||[]).map(x=>({...x,friend:back.has(x.id)})).sort((a,b)=>Number(b.friend)-Number(a.friend));
+  const viewedOnline=!!viewed.last_seen_at && Date.now()-new Date(viewed.last_seen_at).getTime()<150000;
 
-  return <><Header user={me}/><main className="socialProfilePage">
+  return <>{user&&<PresenceHeartbeat userId={user.id}/>}<Header user={me}/><main className="socialProfilePage">
     <section className="socialProfileShell">
       <div className="socialCover"><div className="coverPixels"/><span className="coverLabel">GOATEDPLUGINS • MINECRAFT COMMUNITY</span></div>
       <div className="socialProfileHeader">
         <div className="socialAvatar">{viewed.avatar_url ? <img src={viewed.avatar_url} alt=""/> : <span>{initial}</span>}</div>
-        <div className="socialNameBlock"><h1>{name}</h1><span>@{viewed.username}</span><p><b>{followerCount || 0}</b> followers · <b>{followingCount || 0}</b> following · <b>{postCount || 0}</b> posts</p></div>
-        <div className="profileHeaderActions">{own ? <Link className="profileGoldAction" href="/settings">✎ Edit profile</Link> : user ? <ProfileFollowButton viewerId={user.id} targetId={viewed.id} initialFollowing={initialFollowing}/> : <Link className="profileGoldAction" href="/">Sign in to follow</Link>}<button className="profileMoreButton">•••</button></div>
+        <div className="socialNameBlock"><h1>{name}</h1><span>@{viewed.username}</span><p><b>{followerCount || 0}</b> followers · <b>{followingCount || 0}</b> following · <b>{postCount || 0}</b> posts</p><small className={`profilePresence ${viewedOnline?"online":"offline"}`}>● {viewedOnline?"Online":"Offline"}</small></div>
+        <div className="profileHeaderActions">{own ? <Link className="profileGoldAction" href="/settings">✎ Edit profile</Link> : user ? <><ProfileFollowButton viewerId={user.id} targetId={viewed.id} initialFollowing={initialFollowing}/><Link className="profileMessageAction" href={`/messages?with=${viewed.id}`}>✉ Message</Link></> : <><Link className="profileGoldAction" href="/?auth=signin">Sign in to follow</Link><Link className="profileMessageAction" href="/?auth=signin">✉ Message</Link></>}<button className="profileMoreButton">•••</button></div>
       </div>
       <nav className="profileTabs"><a className="active" href="#posts">Posts</a><a href="#about">About</a><a href="#plugins">Plugins</a><a href="#media">Media</a></nav>
     </section>
@@ -61,7 +70,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
           {own && <Link className="wideProfileButton" href="/settings">Edit details</Link>}
         </article>
         <article id="plugins" className="profilePanel"><div className="profilePanelHeading"><h2>Plugins</h2><span>{pluginCount || 0} published</span></div><div className="profileMiniEmpty"><span>⬡</span><p>Published Minecraft plugins will appear here.</p></div></article>
-        <article className="profilePanel"><div className="profilePanelHeading"><h2>Highlights</h2></div><div className="profileMiniEmpty"><span>✦</span><p>Profile highlights will appear here.</p></div></article>
+        <ProfileConnections people={connections as any}/><article className="profilePanel"><div className="profilePanelHeading"><h2>Highlights</h2></div><div className="profileMiniEmpty"><span>✦</span><p>Profile highlights will appear here.</p></div></article>
       </aside>
 
       <section id="posts" className="profileFeedColumn">

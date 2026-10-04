@@ -27,15 +27,16 @@ export default function SocialPostCard({post,currentUserId,onChanged}:{post:Soci
     return()=>{document.removeEventListener("mousedown",outside);document.removeEventListener("keydown",esc)};
   },[]);
 
+  function requireAuth(){setNotice("Sign in or create an account to interact with posts.");window.dispatchEvent(new Event("goated:auth"));}
   async function toggleLike(){
-    if(!currentUserId)return;
+    if(!currentUserId)return requireAuth();
     const liked=(row.post_likes||[]).some(x=>x.user_id===currentUserId);
     setRow(x=>({...x,post_likes:liked?(x.post_likes||[]).filter(v=>v.user_id!==currentUserId):[...(x.post_likes||[]),{user_id:currentUserId}]}));
     const q=liked?supabase.from("post_likes").delete().eq("post_id",row.id).eq("user_id",currentUserId):supabase.from("post_likes").insert({post_id:row.id,user_id:currentUserId});
     const {error}=await q;if(error)location.reload();
   }
   async function mark(){
-    if(!currentUserId)return;
+    if(!currentUserId)return requireAuth();
     const {data}=await supabase.from("marked_posts").select("post_id").eq("post_id",row.id).eq("user_id",currentUserId).maybeSingle();
     if(data){await supabase.from("marked_posts").delete().eq("post_id",row.id).eq("user_id",currentUserId);setNotice("Removed from Marked Posts.");}
     else{await supabase.from("marked_posts").insert({post_id:row.id,user_id:currentUserId});setNotice("Saved to Marked Posts.");}
@@ -76,7 +77,7 @@ export default function SocialPostCard({post,currentUserId,onChanged}:{post:Soci
       <div className="postAuthorLine"><Link href={`/profile/${encodeURIComponent(p.username||"player")}`}><b>{p.display_name||p.username||"Goated User"}</b></Link><span>@{p.username||"player"} · {new Date(row.created_at).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}{edited?" · edited":""}</span></div>
       <div className="postMenuWrap" ref={menuRef}><button className="postMore" aria-label="Post options" onClick={()=>setMenu(v=>!v)}>•••</button>
         {menu&&<div className="postMenu">
-          {own?<><button onClick={()=>{setEditing(true);setMenu(false)}}>✎ Edit post</button><button className="danger" onClick={remove}>⌫ Delete post</button></>:currentUserId&&<button onClick={toggleFollow}>{following?"✓ Unfollow author":"+ Follow author"}</button>}
+          {own?<><button onClick={()=>{setEditing(true);setMenu(false)}}>✎ Edit post</button><button className="danger" onClick={remove}>⌫ Delete post</button></>:currentUserId?<button onClick={toggleFollow}>{following?"✓ Unfollow author":"+ Follow author"}</button>:<button onClick={()=>{setMenu(false);requireAuth()}}>+ Follow author</button>}
           <button onClick={share}>↗ Share post</button>
         </div>}
       </div>
@@ -85,9 +86,9 @@ export default function SocialPostCard({post,currentUserId,onChanged}:{post:Soci
     {row.image_url&&<img className="postImage" src={row.image_url} alt="Post attachment"/>}
     {notice&&<div className="postNotice">{notice}</div>}
     <div className="postActions">
-      <button className={(row.post_likes||[]).some(x=>x.user_id===currentUserId)?"liked":""} onClick={toggleLike} disabled={!currentUserId}>♡ <span>{row.post_likes?.length||0}</span></button>
+      <button className={(row.post_likes||[]).some(x=>x.user_id===currentUserId)?"liked":""} onClick={toggleLike}>♡ <span>{row.post_likes?.length||0}</span></button>
       <button disabled title="Comments are coming next">◯ <span>{row.post_comments?.length||0}</span></button>
-      <button onClick={mark} disabled={!currentUserId}>◇ Mark</button>
+      <button onClick={mark}>◇ Mark</button>
       <button onClick={share}>↗ Share</button>
     </div>
   </article>;

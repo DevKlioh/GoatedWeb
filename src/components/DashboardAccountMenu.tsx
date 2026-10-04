@@ -20,6 +20,7 @@ export default function DashboardAccountMenu({name,username,avatar}:Props){
      <Link href="/resources" onClick={()=>setOpen(false)}><span>⬡</span><div><b>Your Resources</b><small>Plugins and resources you own</small></div></Link>
      <Link href="/marked" onClick={()=>setOpen(false)}><span>◆</span><div><b>Marked Posts</b><small>Posts you saved for later</small></div></Link>
      <Link href="/notifications" onClick={()=>setOpen(false)}><span>●</span><div><b>Notifications</b><small>Mentions, replies, likes and messages</small></div></Link>
+     <Link href="/messages" onClick={()=>setOpen(false)}><span>✉</span><div><b>Messages</b><small>Your private conversations</small></div></Link>
     </div>
     <div className="dashboardAccountFooter"><Link href="/resources/upload" onClick={()=>setOpen(false)}>＋ Upload Resource</Link><button type="button" onClick={logout}>Log out</button></div>
    </div>}

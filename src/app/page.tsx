@@ -1,110 +1,18 @@
 import Link from "next/link";
 import Header from "@/components/Header";
-import AuthButton from "@/components/AuthButton";
 import GoatedLogo from "@/components/GoatedLogo";
 import { createClient } from "@/lib/supabase/server";
 import DashboardAccountMenu from "@/components/DashboardAccountMenu";
 import HomeSocialFeed from "@/components/HomeSocialFeed";
 import HomeProfileStats from "@/components/HomeProfileStats";
 import LiveSearch from "@/components/LiveSearch";
+import SocialPostCard from "@/components/SocialPostCard";
+import PresenceHeartbeat from "@/components/PresenceHeartbeat";
 
-export default async function Home() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  let profile: any = null;
-  if (user) {
-    const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
-    profile = data || {
-      id: user.id,
-      username: user.user_metadata?.preferred_username || user.email?.split("@")[0] || "player",
-      display_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email || "Player",
-      avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null
-    };
-  }
-
-  if (!user) {
-    return <>
-      <Header user={null}/>
-      <main className="landingPage">
-        <section className="pluginHero">
-          <div className="heroGlow"/>
-          <div className="pixelDecor pixelOne"/>
-          <div className="pixelDecor pixelTwo"/>
-          <div className="heroBrand"><GoatedLogo/></div>
-          <span className="goldEyebrow">MINECRAFT PLUGINS • COMMUNITY • DEVELOPMENT</span>
-          <h1>Build better.<br/><span>Play smarter.</span></h1>
-          <p>A home for Minecraft server owners, developers and players to discover plugins, share ideas, get support and grow together.</p>
-          <div className="heroButtons"><AuthButton user={null}/><a className="secondaryButton" href="#features">Explore GoatedPlugins</a></div>
-        </section>
-        <section id="features" className="pluginFeatures">
-          <article><span>◆</span><h2>Discover Plugins</h2><p>Find tools and ideas built for modern Minecraft communities.</p></article>
-          <article><span>▣</span><h2>Developer Community</h2><p>Connect with creators, server owners and other builders.</p></article>
-          <article><span>✦</span><h2>Built for Minecraft</h2><p>A focused community instead of another generic social platform.</p></article>
-        </section>
-      </main>
-    </>;
-  }
-
-  const username = profile?.username || "player";
-  const name = profile?.display_name || username;
-  const avatar = profile?.avatar_url;
-
-  const { data: postsData } = await supabase
-    .from("posts")
-    .select("id,content,created_at,updated_at,image_url,author_id,profiles:profiles!posts_author_id_fkey_profiles(username,display_name,avatar_url),post_likes(user_id),post_comments(id)")
-    .order("created_at",{ascending:false})
-    .limit(30);
-  const posts = postsData || [];
-  const [{ count: postCount }, { count: followerCount }, { count: followingCount }] = await Promise.all([
-    supabase.from("posts").select("*",{count:"exact",head:true}).eq("author_id",user.id),
-    supabase.from("follows").select("*",{count:"exact",head:true}).eq("following_id",user.id),
-    supabase.from("follows").select("*",{count:"exact",head:true}).eq("follower_id",user.id)
-  ]);
-
-  return <div className="appShell">
-    <aside className="sideNav">
-      <GoatedLogo/>
-      <nav>
-        <Link className="active" href="/">⌂ <span>Home</span></Link>
-        <Link href="/profile/me">♙ <span>Profile</span></Link>
-        <a href="#explore">◇ <span>Explore</span></a>
-        <a href="#notifications">♧ <span>Notifications</span></a>
-        <a href="#messages">✉ <span>Messages</span></a>
-        <Link href="/settings">⚙ <span>Settings</span></Link>
-      </nav>
-      <div className="sidePromo"><span className="crown">♛</span><h3>Build Better Minecraft Servers</h3><p>Discover, share and discuss Minecraft plugins with the Goated community.</p><button>Explore Plugins</button></div>
-    </aside>
-
-    <div className="appMain">
-      <header className="dashboardTop">
-        <LiveSearch variant="dashboard"/>
-        <div className="topActions"><button className="iconButton">♢</button><DashboardAccountMenu name={name} username={username} avatar={avatar} /></div>
-      </header>
-
-      <div className="dashboardGrid">
-        <main className="feedColumn">
-          <section className="minecraftWelcome">
-            <div className="voxelSky"/>
-            <span className="goldEyebrow">WELCOME HOME</span>
-            <h1>Welcome to <b>GoatedPlugins</b></h1>
-            <p>The community for Minecraft plugin developers, server owners and players.</p>
-            <div className="welcomePerks"><span>⬡ Share Plugins</span><span>▣ Get Support</span><span>♙ Grow Together</span></div>
-          </section>
-
-          <HomeSocialFeed userId={user.id} name={name} username={username} avatar={avatar} initialPosts={posts as any} />
-        </main>
-
-        <aside className="rightRail">
-          <section className="railCard profileCard">
-            <div className="railTitle"><b>♛ Your Profile</b><Link href="/profile/me">View Profile →</Link></div>
-            <div className="profileIdentity">{avatar ? <img src={avatar} alt=""/> : <div className="bigAvatar">{name.slice(0,1).toUpperCase()}</div>}<div><strong>{name}</strong><span>@{username}</span></div></div>
-            <HomeProfileStats posts={postCount || 0} followers={followerCount || 0} following={followingCount || 0}/>
-            <Link className="editProfileButton" href="/settings">✎ Edit Profile</Link>
-          </section>
-          <section className="railCard"><div className="railTitle"><b>✦ Goated Topics</b></div><div className="topic">#plugins <span>Discover</span></div><div className="topic">#minecraft <span>Community</span></div><div className="topic">#development <span>Build</span></div><div className="topic">#server <span>Discuss</span></div></section>
-        </aside>
-      </div>
-    </div>
-  </div>;
-}
+const selectPosts="id,content,created_at,updated_at,image_url,author_id,profiles:profiles!posts_author_id_fkey_profiles(username,display_name,avatar_url),post_likes(user_id),post_comments(id)";
+export default async function Home(){const supabase=await createClient();const {data:{user}}=await supabase.auth.getUser();
+ if(!user){const {data:recent}=await supabase.from("posts").select(selectPosts).order("created_at",{ascending:false}).limit(40);return <><Header user={null}/><main className="publicCommunityHome"><section className="publicFeedHeading"><div><span className="goldEyebrow">GOATEDPLUGINS COMMUNITY</span><h1>Latest from the community</h1><p>Discover what Minecraft creators, server owners and players are sharing right now.</p></div></section><section className="publicPostFeed">{(recent||[]).length?(recent||[]).map((p:any)=><SocialPostCard key={p.id} post={p} currentUserId={null}/>):<div className="emptyFeed"><span>⬡</span><h2>No posts yet</h2><p>The first community posts will appear here.</p></div>}</section></main></>}
+ const {data:profile}=await supabase.from("profiles").select("*").eq("id",user.id).maybeSingle();const username=profile?.username||user.email?.split("@")[0]||"player",name=profile?.display_name||username,avatar=profile?.avatar_url;
+ const [{data:allPosts},{data:myFollowing},{data:myFollowers},{count:postCount},{count:followerCount},{count:followingCount}]=await Promise.all([supabase.from("posts").select(selectPosts).order("created_at",{ascending:false}).limit(80),supabase.from("follows").select("following_id").eq("follower_id",user.id),supabase.from("follows").select("follower_id").eq("following_id",user.id),supabase.from("posts").select("*",{count:"exact",head:true}).eq("author_id",user.id),supabase.from("follows").select("*",{count:"exact",head:true}).eq("following_id",user.id),supabase.from("follows").select("*",{count:"exact",head:true}).eq("follower_id",user.id)]);
+ const following=new Set((myFollowing||[]).map(x=>x.following_id)),followers=new Set((myFollowers||[]).map(x=>x.follower_id));const priority=(id:string)=>following.has(id)&&followers.has(id)?0:following.has(id)?1:2;const posts=[...(allPosts||[])].sort((a,b)=>priority(a.author_id)-priority(b.author_id)||new Date(b.created_at).getTime()-new Date(a.created_at).getTime()).slice(0,50);
+ return <div className="appShell"><PresenceHeartbeat userId={user.id}/><aside className="sideNav"><GoatedLogo/><nav><Link className="active" href="/">⌂ <span>Home</span></Link><Link href="/profile/me">♙ <span>Profile</span></Link><a href="#explore">◇ <span>Explore</span></a><Link href="/notifications">♧ <span>Notifications</span></Link><Link href="/messages">✉ <span>Messages</span></Link><Link href="/settings">⚙ <span>Settings</span></Link></nav><div className="sidePromo"><span className="crown">♛</span><h3>Build Better Minecraft Servers</h3><p>Discover, share and discuss Minecraft plugins with the Goated community.</p><button>Explore Plugins</button></div></aside><div className="appMain"><header className="dashboardTop"><LiveSearch variant="dashboard"/><div className="topActions"><button className="iconButton">♢</button><DashboardAccountMenu name={name} username={username} avatar={avatar}/></div></header><div className="dashboardGrid"><main className="feedColumn"><div className="feedPriorityNote"><b>For You</b><span>Friends and people you follow are prioritized.</span></div><HomeSocialFeed userId={user.id} name={name} username={username} avatar={avatar} initialPosts={posts as any}/></main><aside className="rightRail"><section className="railCard profileCard"><div className="railTitle"><b>♛ Your Profile</b><Link href="/profile/me">View Profile →</Link></div><div className="profileIdentity">{avatar?<img src={avatar} alt=""/>:<div className="bigAvatar">{name.slice(0,1).toUpperCase()}</div>}<div><strong>{name}</strong><span>@{username}</span></div></div><HomeProfileStats posts={postCount||0} followers={followerCount||0} following={followingCount||0}/><Link className="editProfileButton" href="/settings">✎ Edit Profile</Link></section><section className="railCard"><div className="railTitle"><b>✦ Goated Topics</b></div><div className="topic">#plugins <span>Discover</span></div><div className="topic">#minecraft <span>Community</span></div><div className="topic">#development <span>Build</span></div><div className="topic">#server <span>Discuss</span></div></section></aside></div></div></div>}
