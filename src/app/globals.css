@@ -175,3 +175,107 @@ a{color:inherit}.siteHeader{background:rgba(8,10,13,.88)!important;border-color:
   background: rgba(243,213,107,.08) !important;
   color: var(--gp-gold) !important;
 }
+
+/* =========================================================
+   GOATEDPLUGINS HEADER FIX
+   Logo left | Search centered | Sign in/account right
+   ========================================================= */
+.siteHeader {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+  width: 100% !important;
+  min-height: 72px !important;
+  padding: 0 28px !important;
+  display: grid !important;
+  grid-template-columns: minmax(220px, 1fr) minmax(320px, 560px) minmax(220px, 1fr) !important;
+  align-items: center !important;
+  gap: 24px !important;
+  box-sizing: border-box !important;
+}
+
+.siteHeader .brandLink {
+  display: flex !important;
+  align-items: center !important;
+  justify-self: start !important;
+  min-width: 0 !important;
+}
+
+.siteHeader .headerSearch {
+  display: flex !important;
+  width: 100% !important;
+  max-width: 560px !important;
+  justify-self: center !important;
+  margin: 0 !important;
+}
+
+.siteHeader .headerRight {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  justify-self: end !important;
+  gap: 18px !important;
+  margin: 0 !important;
+  min-width: max-content !important;
+}
+
+.siteHeader .headerRight > a {
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+.siteHeader .primaryAuthButton {
+  margin: 0 !important;
+  width: auto !important;
+  min-width: 100px !important;
+  padding: 11px 20px !important;
+  white-space: nowrap !important;
+}
+
+/* Make sure the header logo itself doesn't force a new line. */
+.siteHeader .goatedLogo {
+  width: auto !important;
+  max-width: 230px !important;
+}
+
+@media (max-width: 900px) {
+  .siteHeader {
+    grid-template-columns: auto minmax(180px, 1fr) auto !important;
+    gap: 12px !important;
+    padding: 0 16px !important;
+  }
+
+  .siteHeader .logoWords small {
+    display: none !important;
+  }
+
+  .siteHeader .headerRight > a {
+    display: none !important;
+  }
+}
+
+@media (max-width: 650px) {
+  .siteHeader {
+    grid-template-columns: auto 1fr auto !important;
+    min-height: 64px !important;
+    padding: 0 10px !important;
+  }
+
+  .siteHeader .logoWords {
+    display: none !important;
+  }
+
+  .siteHeader .headerSearch {
+    display: flex !important;
+    min-width: 0 !important;
+  }
+
+  .siteHeader .headerSearch input {
+    min-width: 0 !important;
+  }
+
+  .siteHeader .primaryAuthButton {
+    min-width: auto !important;
+    padding: 10px 13px !important;
+  }
+}
