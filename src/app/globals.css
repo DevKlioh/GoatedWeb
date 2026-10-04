@@ -21,3 +21,6 @@
   overflow: auto;
   margin: auto;
 }
+
+.emailLinkNotice{display:grid;gap:6px;padding:14px 16px;border:1px solid rgba(124,145,255,.24);border-radius:12px;background:rgba(86,104,246,.08)}
+.emailLinkNotice strong{font-size:14px}.emailLinkNotice span{font-size:13px;line-height:1.5;opacity:.82}

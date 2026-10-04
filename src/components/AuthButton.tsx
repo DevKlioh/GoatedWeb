@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type Props = { user: { name: string; avatar?: string | null } | null };
-type View = "signin" | "signup" | "verify" | "forgot" | "recovery-code" | "new-password";
+type View = "signin" | "signup" | "verify" | "forgot" | "recovery-code" | "new-password" | "checkemail";
 
 const strongPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 const validUsername = /^[A-Za-z0-9_]{3,24}$/;
@@ -55,7 +55,7 @@ export default function AuthButton({ user }: Props) {
     });
     setBusy(false);
     if (error) return setError(error.message);
-    setMessage("We sent a 6-digit verification code to your email."); setView("verify");
+    setMessage("We sent a confirmation link to your email."); setView("checkemail");
   }
 
   async function verifySignup(e: FormEvent) {
@@ -114,8 +114,8 @@ export default function AuthButton({ user }: Props) {
         <button className="modalClose" onClick={() => setOpen(false)} aria-label="Close">×</button>
         <div className="authHeading">
           <span className="eyebrow">GOATED WEBSITE</span>
-          <h2>{view === "signup" ? "Create your account" : view === "verify" ? "Verify your email" : view === "forgot" || view === "recovery-code" || view === "new-password" ? "Recover your account" : "Welcome back"}</h2>
-          <p>{view === "verify" ? `Enter the code sent to ${email}.` : view === "recovery-code" ? `Enter the recovery code sent to ${email}.` : view === "new-password" ? "Choose a new strong password." : "Sign in securely to continue."}</p>
+          <h2>{view === "signup" ? "Create your account" : view === "checkemail" ? "Check your email" : view === "verify" ? "Verify your email" : view === "forgot" || view === "recovery-code" || view === "new-password" ? "Recover your account" : "Welcome back"}</h2>
+          <p>{view === "checkemail" ? `We sent a confirmation link to ${email}. Open the email and click the link to verify your account.` : view === "verify" ? `Enter the code sent to ${email}.` : view === "recovery-code" ? `Enter the recovery code sent to ${email}.` : view === "new-password" ? "Choose a new strong password." : "Sign in securely to continue."}</p>
         </div>
 
         {error && <div className="authNotice errorNotice">{error}</div>}
@@ -145,6 +145,10 @@ export default function AuthButton({ user }: Props) {
           <p className="switchAuth">Already have an account? <button onClick={()=>changeView("signin")}>Sign in</button></p>
         </>}
 
+        {view === "checkemail" && <div className="authForm">
+          <div className="emailLinkNotice"><strong>Confirmation email sent</strong><span>Click the verification link in your email. After your email is verified, come back here and sign in normally.</span></div>
+          <button type="button" className="formSubmit" onClick={()=>changeView("signin")}>Back to sign in</button>
+        </div>}
         {view === "verify" && <form className="authForm" onSubmit={verifySignup}><label>6-digit verification code<input className="codeInput" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,"").slice(0,6))} placeholder="000000" autoComplete="one-time-code" /></label><button className="formSubmit" disabled={busy}>{busy?"Verifying…":"Verify email"}</button><button type="button" className="textButton" onClick={resendSignup} disabled={busy}>Resend code</button></form>}
 
         {view === "forgot" && <form className="authForm" onSubmit={sendRecovery}><label>Registered email<input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" /></label><button className="formSubmit" disabled={busy}>{busy?"Sending…":"Send recovery code"}</button><button type="button" className="textButton" onClick={()=>changeView("signin")}>Back to sign in</button></form>}
