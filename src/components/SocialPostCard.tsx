@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 export type SocialPost={
   id:string; content:string; created_at:string; updated_at:string; image_url:string|null; author_id:string;
   profiles?:{username?:string;display_name?:string;avatar_url?:string|null}|null;
-  post_likes?:{user_id:string}[]; post_comments?:{id:string}[];
+  post_likes?:{user_id:string}[]; post_comments?:{id:string}[]; post_images?:{id:string;image_url:string;position:number}[];
 };
 
 export default function SocialPostCard({post,currentUserId,onChanged}:{post:SocialPost;currentUserId?:string|null;onChanged?:(kind:"edit"|"delete"|"follow",post?:SocialPost)=>void}){
@@ -43,11 +43,11 @@ export default function SocialPostCard({post,currentUserId,onChanged}:{post:Soci
   }
   async function share(){
     const url=`${location.origin}/profile/${encodeURIComponent(p.username||"player")}?post=${row.id}`;
-    try{if(navigator.share)await navigator.share({title:`Post by ${p.display_name||p.username||"GoatedPlugins user"}`,url});else{await navigator.clipboard.writeText(url);setNotice("Post link copied.");}}catch{}
+    try{if(navigator.share)await navigator.share({title:`Post by ${p.display_name||p.username||"OrvenSMP user"}`,url});else{await navigator.clipboard.writeText(url);setNotice("Post link copied.");}}catch{}
     setMenu(false);
   }
   async function saveEdit(){
-    const content=draft.trim();if(!content&&!row.image_url)return setNotice("A post can't be empty.");
+    const content=draft.trim();if(!content&&!row.image_url&&!(row.post_images||[]).length)return setNotice("A post can't be empty.");
     setBusy(true);
     const {data,error}=await supabase.from("posts").update({content,updated_at:new Date().toISOString()}).eq("id",row.id).eq("author_id",currentUserId).select("id,content,created_at,updated_at,image_url,author_id").single();
     setBusy(false);
@@ -83,7 +83,7 @@ export default function SocialPostCard({post,currentUserId,onChanged}:{post:Soci
       </div>
     </div>
     {editing?<div className="postEditBox"><textarea maxLength={2000} value={draft} onChange={e=>setDraft(e.target.value)}/><div><span>{2000-draft.length}</span><button onClick={()=>{setDraft(row.content);setEditing(false)}}>Cancel</button><button className="goldButton" disabled={busy} onClick={saveEdit}>{busy?"Saving…":"Save changes"}</button></div></div>:row.content&&<p className="postText">{row.content}</p>}
-    {row.image_url&&<img className="postImage" src={row.image_url} alt="Post attachment"/>}
+    {(()=>{const imgs=(row.post_images||[]).slice().sort((a,b)=>a.position-b.position).map(x=>x.image_url);if(!imgs.length&&row.image_url)imgs.push(row.image_url);return imgs.length?<div className={`postImageGallery count${imgs.length}`}>{imgs.map((src,i)=><img key={`${src}-${i}`} src={src} alt={`Post attachment ${i+1}`}/>)}</div>:null})()}
     {notice&&<div className="postNotice">{notice}</div>}
     <div className="postActions">
       <button className={(row.post_likes||[]).some(x=>x.user_id===currentUserId)?"liked":""} onClick={toggleLike}>♡ <span>{row.post_likes?.length||0}</span></button>

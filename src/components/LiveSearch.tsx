@@ -60,7 +60,7 @@ export default function LiveSearch({variant="dashboard"}:{variant?:"dashboard"|"
     <input ref={input} aria-label="Search users and plugins" value={query} onChange={e=>{setQuery(e.target.value);setOpen(true)}} onFocus={()=>setOpen(true)} onKeyDown={keyboard} placeholder="Search users or plugins..." autoComplete="off"/>
     {variant==="dashboard"&&<kbd>Ctrl K</kbd>}
     {open&&query.trim().length>0&&<div className="liveSearchDropdown">
-      {query.trim().length<2?<div className="searchHint">Type at least 2 characters to search.</div>:loading?<div className="searchLoading"><i/> Searching GoatedPlugins…</div>:results.length===0?<div className="searchEmpty"><b>No matches found</b><span>No users or plugins match “{query.trim()}”.</span></div>:<>
+      {query.trim().length<2?<div className="searchHint">Type at least 2 characters to search.</div>:loading?<div className="searchLoading"><i/> Searching OrvenSMP…</div>:results.length===0?<div className="searchEmpty"><b>No matches found</b><span>No users or plugins match “{query.trim()}”.</span></div>:<>
         {people.length>0&&<div className="searchGroup"><div className="searchGroupTitle">People</div>{people.map((p,i)=>{
           const idx=i;return <Link onMouseEnter={()=>setActive(idx)} className={`searchResult ${active===idx?"active":""}`} onClick={()=>setOpen(false)} href={`/profile/${encodeURIComponent(p.username||"player")}`} key={p.id}>
             <span className="searchResultImage">{p.avatar_url?<img src={p.avatar_url} alt=""/>:(p.display_name||p.username||"G").slice(0,1).toUpperCase()}</span><span><b>{p.display_name||p.username||"Goated User"}</b><small>@{p.username||"player"}</small></span><em>Profile →</em>

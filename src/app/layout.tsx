@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import NavigationProgress from "@/components/NavigationProgress";
 
 export const metadata: Metadata = {
-  title: { default: "GoatedPlugins", template: "%s | GoatedPlugins" },
+  title: { default: "OrvenSMP", template: "%s | OrvenSMP" },
   description: "Minecraft plugins, community and development.",
   icons: {
     icon: [

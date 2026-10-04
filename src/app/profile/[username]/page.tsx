@@ -33,7 +33,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
     supabase.from("posts").select("*",{count:"exact",head:true}).eq("author_id",viewed.id),
     supabase.from("follows").select("*",{count:"exact",head:true}).eq("following_id",viewed.id),
     supabase.from("follows").select("*",{count:"exact",head:true}).eq("follower_id",viewed.id),
-    supabase.from("posts").select("id,content,created_at,updated_at,image_url,author_id,profiles:profiles!posts_author_id_fkey_profiles(username,display_name,avatar_url),post_likes(user_id),post_comments(id)").eq("author_id",viewed.id).order("created_at",{ascending:false}).limit(50),
+    supabase.from("posts").select("id,content,created_at,updated_at,image_url,author_id,profiles:profiles!posts_author_id_fkey_profiles(username,display_name,avatar_url),post_likes(user_id),post_comments(id),post_images(id,image_url,position)").eq("author_id",viewed.id).order("created_at",{ascending:false}).limit(50),
     supabase.from("resources").select("*",{count:"exact",head:true}).eq("owner_id",viewed.id).eq("status","published")
   ]);
   let initialFollowing=false;
@@ -51,7 +51,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
 
   return <>{user&&<PresenceHeartbeat userId={user.id}/>}<Header user={me}/><main className="socialProfilePage">
     <section className="socialProfileShell">
-      <div className="socialCover"><div className="coverPixels"/><span className="coverLabel">GOATEDPLUGINS • MINECRAFT COMMUNITY</span></div>
+      <div className="socialCover"><div className="coverPixels"/><span className="coverLabel">ORVENSMP • MINECRAFT COMMUNITY</span></div>
       <div className="socialProfileHeader">
         <div className="socialAvatar">{viewed.avatar_url ? <img src={viewed.avatar_url} alt=""/> : <span>{initial}</span>}</div>
         <div className="socialNameBlock"><h1>{name}</h1><span>@{viewed.username}</span><p><b>{followerCount || 0}</b> followers · <b>{followingCount || 0}</b> following · <b>{postCount || 0}</b> posts</p><small className={`profilePresence ${viewedOnline?"online":"offline"}`}>● {viewedOnline?"Online":"Offline"}</small></div>
@@ -63,13 +63,13 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
     <section className="profileBodyGrid">
       <aside className="profileLeftColumn">
         <article id="about" className="profilePanel introPanel"><h2>About</h2>
-          <p className="profileAboutText">{viewed.bio || (own ? "Add a bio to tell the GoatedPlugins community about yourself." : "This member hasn't added a bio yet.")}</p>
+          <p className="profileAboutText">{viewed.bio || (own ? "Add a bio to tell the OrvenSMP community about yourself." : "This member hasn't added a bio yet.")}</p>
           <div className="profileDetail"><span>◆</span><div><small>Username</small><strong>@{viewed.username}</strong></div></div>
           <div className="profileDetail"><span>◷</span><div><small>Joined</small><strong>{joined}</strong></div></div>
-          <div className="profileDetail"><span>⬡</span><div><small>Community</small><strong>GoatedPlugins</strong></div></div>
+          <div className="profileDetail"><span>⬡</span><div><small>Community</small><strong>OrvenSMP</strong></div></div>
           {own && <Link className="wideProfileButton" href="/settings">Edit details</Link>}
         </article>
-        <article id="plugins" className="profilePanel"><div className="profilePanelHeading"><h2>Plugins</h2><span>{pluginCount || 0} published</span></div><div className="profileMiniEmpty"><span>⬡</span><p>Published Minecraft plugins will appear here.</p></div></article>
+        <article id="plugins" className="profilePanel"><div className="profilePanelHeading"><h2>Plugins</h2><span>{pluginCount || 0} published</span></div><div className="profileMiniEmpty"><span>⬡</span><p>Official resources published by this administrator will appear here.</p></div></article>
         <ProfileConnections people={connections as any}/><article className="profilePanel"><div className="profilePanelHeading"><h2>Highlights</h2></div><div className="profileMiniEmpty"><span>✦</span><p>Profile highlights will appear here.</p></div></article>
       </aside>
 
