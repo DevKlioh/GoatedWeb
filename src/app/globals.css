@@ -279,3 +279,157 @@ a{color:inherit}.siteHeader{background:rgba(8,10,13,.88)!important;border-color:
     padding: 10px 13px !important;
   }
 }
+
+
+/* =========================================================
+   YOUR PROFILE CARD V2
+   Fixes title/avatar collision and creates a clear card hierarchy.
+   ========================================================= */
+.rightRail .profileCard {
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.rightRail .profileCard .railTitle {
+  height: 50px !important;
+  min-height: 50px !important;
+  padding: 0 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  border-bottom: 1px solid #292c30 !important;
+  box-sizing: border-box !important;
+}
+
+.rightRail .profileCard .railTitle b {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.rightRail .profileCard .railTitle a {
+  margin: 0 !important;
+  padding: 0 !important;
+  flex: 0 0 auto !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+}
+
+.rightRail .profileCard .profileIdentity {
+  margin: 0 !important;
+  padding: 16px 18px 17px !important;
+  min-height: 88px !important;
+  display: grid !important;
+  grid-template-columns: 58px minmax(0, 1fr) !important;
+  align-items: center !important;
+  column-gap: 14px !important;
+  box-sizing: border-box !important;
+  border-bottom: 0 !important;
+}
+
+.rightRail .profileCard .profileIdentity > img,
+.rightRail .profileCard .profileIdentity > .bigAvatar {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  margin: 0 !important;
+  width: 58px !important;
+  height: 58px !important;
+  min-width: 58px !important;
+  border-radius: 14px !important;
+  object-fit: cover !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+.rightRail .profileCard .profileIdentity > div:last-child {
+  min-width: 0 !important;
+  width: 100% !important;
+  display: block !important;
+}
+
+.rightRail .profileCard .profileIdentity strong {
+  margin: 0 0 5px !important;
+  padding: 0 !important;
+  display: block !important;
+  font-size: 16px !important;
+  line-height: 1.15 !important;
+  font-weight: 850 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.rightRail .profileCard .profileIdentity span {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block !important;
+  font-size: 12px !important;
+  line-height: 1.2 !important;
+  color: #92959a !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.rightRail .profileCard .profileStats {
+  margin: 0 18px !important;
+  padding: 15px 0 !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  border-top: 1px solid #292c30 !important;
+  border-bottom: 1px solid #292c30 !important;
+}
+
+.rightRail .profileCard .profileStats > div {
+  min-width: 0 !important;
+  padding: 0 8px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 5px !important;
+  border-right: 1px solid #292c30 !important;
+}
+
+.rightRail .profileCard .profileStats > div:last-child {
+  border-right: 0 !important;
+}
+
+.rightRail .profileCard .profileStats b {
+  font-size: 16px !important;
+  line-height: 1 !important;
+}
+
+.rightRail .profileCard .profileStats span {
+  font-size: 10px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.rightRail .profileCard .editProfileButton {
+  width: auto !important;
+  min-height: 42px !important;
+  margin: 16px 18px 18px !important;
+  padding: 0 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+}
+
+/* Keep the rail wide enough that labels don't collide on medium desktops. */
+@media (min-width: 1051px) {
+  .dashboardGrid {
+    grid-template-columns: minmax(0, 1fr) 350px !important;
+  }
+}
