@@ -1,34 +1,102 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import AuthButton from "@/components/AuthButton";
+import GoatedLogo from "@/components/GoatedLogo";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  let dbProfile: { username: string | null; display_name: string | null; bio: string | null; avatar_url: string | null } | null = null;
+
+  let profile: any = null;
   if (user) {
-    const { data } = await supabase.from("profiles").select("username,display_name,bio,avatar_url").eq("id", user.id).maybeSingle();
-    dbProfile = data;
+    const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    profile = data || {
+      id: user.id,
+      username: user.user_metadata?.preferred_username || user.email?.split("@")[0] || "player",
+      display_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email || "Player",
+      avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null
+    };
   }
-  const fallbackName = (user?.user_metadata?.full_name || user?.user_metadata?.name || user?.user_metadata?.preferred_username || user?.email || "Account") as string;
-  const profile = user ? {
-    name: dbProfile?.display_name || fallbackName,
-    username: dbProfile?.username || null,
-    avatar: dbProfile?.avatar_url || (user.user_metadata?.avatar_url || user.user_metadata?.picture || null) as string | null
-  } : null;
 
-  if (user && profile) return <><Header user={profile}/><main className="socialShell">
-    <aside className="leftRail">
-      <div className="railCard"><span className="eyebrow">NAVIGATION</span><Link className="railLink active" href="/">⌂ <span>Home</span></Link>{profile.username && <Link className="railLink" href={`/profile/${encodeURIComponent(profile.username)}`}>◎ <span>Profile</span></Link>}<span className="railLink disabled">◇ <span>Notifications</span><small>Soon</small></span><Link className="railLink" href="/settings">⚙ <span>Settings</span></Link></div>
+  if (!user) {
+    return <>
+      <Header user={null}/>
+      <main className="landingPage">
+        <section className="pluginHero">
+          <div className="heroGlow"/>
+          <div className="pixelDecor pixelOne"/>
+          <div className="pixelDecor pixelTwo"/>
+          <div className="heroBrand"><GoatedLogo/></div>
+          <span className="goldEyebrow">MINECRAFT PLUGINS • COMMUNITY • DEVELOPMENT</span>
+          <h1>Build better.<br/><span>Play smarter.</span></h1>
+          <p>A home for Minecraft server owners, developers and players to discover plugins, share ideas, get support and grow together.</p>
+          <div className="heroButtons"><AuthButton user={null}/><a className="secondaryButton" href="#features">Explore GoatedPlugins</a></div>
+        </section>
+        <section id="features" className="pluginFeatures">
+          <article><span>◆</span><h2>Discover Plugins</h2><p>Find tools and ideas built for modern Minecraft communities.</p></article>
+          <article><span>▣</span><h2>Developer Community</h2><p>Connect with creators, server owners and other builders.</p></article>
+          <article><span>✦</span><h2>Built for Minecraft</h2><p>A focused community instead of another generic social platform.</p></article>
+        </section>
+      </main>
+    </>;
+  }
+
+  const username = profile?.username || "player";
+  const name = profile?.display_name || username;
+  const avatar = profile?.avatar_url;
+
+  return <div className="appShell">
+    <aside className="sideNav">
+      <GoatedLogo/>
+      <nav>
+        <Link className="active" href="/">⌂ <span>Home</span></Link>
+        <Link href={`/profile/${username}`}>♙ <span>Profile</span></Link>
+        <a href="#explore">◇ <span>Explore</span></a>
+        <a href="#notifications">♧ <span>Notifications</span></a>
+        <a href="#messages">✉ <span>Messages</span></a>
+        <Link href="/settings">⚙ <span>Settings</span></Link>
+      </nav>
+      <div className="sidePromo"><span className="crown">♛</span><h3>Build Better Minecraft Servers</h3><p>Discover, share and discuss Minecraft plugins with the Goated community.</p><button>Explore Plugins</button></div>
     </aside>
-    <section className="feedColumn">
-      <div className="feedHeading"><div><span className="eyebrow">HOME</span><h1>Your feed</h1></div><span className="livePill">Connected</span></div>
-      <article className="composerCard"><div className="miniAvatar">{profile.avatar ? <img src={profile.avatar} alt=""/> : profile.name.slice(0,1).toUpperCase()}</div><div><strong>What's happening?</strong><p>Posting is the next feature we'll connect to this feed.</p></div><button disabled>Post soon</button></article>
-      <article className="emptyFeed"><span className="emptyIcon">✦</span><h2>Your home is ready.</h2><p>Profiles are now connected. Posts, follows and recommendations can plug into this feed next.</p></article>
-    </section>
-    <aside className="rightRail"><div className="profileMiniCard"><div className="miniAvatar large">{profile.avatar ? <img src={profile.avatar} alt=""/> : profile.name.slice(0,1).toUpperCase()}</div><strong>{profile.name}</strong><span>{profile.username ? `@${profile.username}` : "Choose a username in Settings"}</span>{profile.username ? <Link href={`/profile/${encodeURIComponent(profile.username)}`}>View profile</Link> : <Link href="/settings">Finish profile</Link>}</div><div className="sideInfo"><span className="eyebrow">COMING NEXT</span><strong>Find your people</strong><p>Follow suggestions and discovery will live here.</p></div></aside>
-  </main></>;
 
-  return <><Header user={null}/><main className="page"><section className="hero"><div className="eyebrow">YOUR COMMUNITY, YOUR SPACE</div><h1>A cleaner place to<br/>connect and share.</h1><p>Secure sign in is ready with Discord, Google, or your verified email account. Create your profile and join the community.</p><div className="heroAction"><AuthButton user={null}/><small>Use social login or create your own account.</small></div></section><section className="featureGrid"><article><span>01</span><h2>Flexible sign in</h2><p>Use Discord, Google, or a verified email account while Supabase securely handles authentication.</p></article><article><span>02</span><h2>Your own profile</h2><p>Choose a unique username, display name and bio that other members can discover.</p></article><article><span>03</span><h2>Built to grow</h2><p>The home feed is ready for posts, follows, notifications and search in the next phases.</p></article></section></main></>;
+    <div className="appMain">
+      <header className="dashboardTop">
+        <div className="dashboardSearch">⌕ <input placeholder="Search users, plugins, posts..."/><kbd>Ctrl K</kbd></div>
+        <div className="topActions"><button className="iconButton">♢</button><Link className="miniAccount" href={`/profile/${username}`}>{avatar ? <img src={avatar} alt=""/> : <span>{name.slice(0,1).toUpperCase()}</span>}<b>{name}</b></Link></div>
+      </header>
+
+      <div className="dashboardGrid">
+        <main className="feedColumn">
+          <section className="minecraftWelcome">
+            <div className="voxelSky"/>
+            <span className="goldEyebrow">WELCOME HOME</span>
+            <h1>Welcome to <b>GoatedPlugins</b></h1>
+            <p>The community for Minecraft plugin developers, server owners and players.</p>
+            <div className="welcomePerks"><span>⬡ Share Plugins</span><span>▣ Get Support</span><span>♙ Grow Together</span></div>
+          </section>
+
+          <section className="composer">
+            <div className="avatar">{avatar ? <img src={avatar} alt=""/> : name.slice(0,1).toUpperCase()}</div>
+            <div className="composerBody"><div className="fakeInput">What's happening in the GoatedPlugins community?</div><div className="composerActions"><button>▢ Post</button><button>▧ Image</button><button>▥ Poll</button><button>⬡ Plugin</button><button className="goldButton">Post</button></div></div>
+          </section>
+
+          <section className="emptyFeed">
+            <span>⬡</span><h2>Your community feed starts here.</h2>
+            <p>Posts, plugin releases and discussions will appear here as we build the next part of GoatedPlugins.</p>
+          </section>
+        </main>
+
+        <aside className="rightRail">
+          <section className="railCard profileCard">
+            <div className="railTitle"><b>♛ Your Profile</b><Link href={`/profile/${username}`}>View Profile →</Link></div>
+            <div className="profileIdentity">{avatar ? <img src={avatar} alt=""/> : <div className="bigAvatar">{name.slice(0,1).toUpperCase()}</div>}<div><strong>{name}</strong><span>@{username}</span></div></div>
+            <div className="profileStats"><div><b>0</b><span>Posts</span></div><div><b>0</b><span>Followers</span></div><div><b>0</b><span>Following</span></div></div>
+            <Link className="editProfileButton" href="/settings">✎ Edit Profile</Link>
+          </section>
+          <section className="railCard"><div className="railTitle"><b>✦ Goated Topics</b></div><div className="topic">#plugins <span>Discover</span></div><div className="topic">#minecraft <span>Community</span></div><div className="topic">#development <span>Build</span></div><div className="topic">#server <span>Discuss</span></div></section>
+        </aside>
+      </div>
+    </div>
+  </div>;
 }
