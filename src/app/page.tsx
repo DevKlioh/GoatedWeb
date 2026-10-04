@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import AuthButton from "@/components/AuthButton";
 import GoatedLogo from "@/components/GoatedLogo";
 import { createClient } from "@/lib/supabase/server";
+import HomeProfileMenu from "@/components/HomeProfileMenu";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -88,12 +89,7 @@ export default async function Home() {
         </main>
 
         <aside className="rightRail">
-          <section className="railCard profileCard">
-            <div className="railTitle"><b>♛ Your Profile</b><Link href="/profile/me">View Profile →</Link></div>
-            <div className="profileIdentity">{avatar ? <img src={avatar} alt=""/> : <div className="bigAvatar">{name.slice(0,1).toUpperCase()}</div>}<div><strong>{name}</strong><span>@{username}</span></div></div>
-            <div className="profileStats"><div><b>0</b><span>Posts</span></div><div><b>0</b><span>Followers</span></div><div><b>0</b><span>Following</span></div></div>
-            <Link className="editProfileButton" href="/settings">✎ Edit Profile</Link>
-          </section>
+          <HomeProfileMenu name={name} username={username} avatar={avatar} />
           <section className="railCard"><div className="railTitle"><b>✦ Goated Topics</b></div><div className="topic">#plugins <span>Discover</span></div><div className="topic">#minecraft <span>Community</span></div><div className="topic">#development <span>Build</span></div><div className="topic">#server <span>Discuss</span></div></section>
         </aside>
       </div>
