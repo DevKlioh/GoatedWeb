@@ -2,3 +2,45 @@
 
 /* Authentication modal */
 .primaryAuthButton{border:0;background:var(--accent);color:#fff;font-weight:800;padding:12px 20px;border-radius:11px;cursor:pointer}.authOverlay{position:fixed;inset:0;background:#000b;backdrop-filter:blur(10px);display:grid;place-items:center;padding:20px;z-index:100}.authModal{position:relative;width:min(100%,480px);max-height:92vh;overflow:auto;background:#0e131d;border:1px solid var(--line);border-radius:22px;padding:30px;box-shadow:0 30px 100px #000}.modalClose{position:absolute;right:16px;top:14px;width:36px;height:36px;border:0;border-radius:10px;background:#ffffff0a;color:var(--muted);font-size:26px;cursor:pointer}.authHeading h2{font-size:32px;letter-spacing:-.035em;margin:9px 0}.authHeading p{color:var(--muted);margin:0 0 22px;line-height:1.5}.authForm{display:flex;flex-direction:column;gap:14px}.authForm label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700;color:#dce0e9}.authForm input{width:100%;border:1px solid var(--line);background:#090d14;color:var(--text);border-radius:11px;padding:13px 14px;outline:none}.authForm input:focus{border-color:#5967f2;box-shadow:0 0 0 3px #5865f21c}.formSubmit{border:0;border-radius:11px;background:var(--accent);color:#fff;font-weight:800;padding:13px;cursor:pointer}.formSubmit:disabled,.textButton:disabled{opacity:.6;cursor:not-allowed}.textButton{border:0;background:transparent;color:#aeb6ff;cursor:pointer;padding:10px 0;font-weight:700}.authDivider{height:1px;background:var(--line);margin:20px 0;position:relative;text-align:center}.authDivider span{position:relative;top:-8px;background:#0e131d;padding:0 10px;color:#687184;font-size:11px;font-weight:800}.socialAuth{display:grid;gap:10px}.socialAuth .discordButton,.socialAuth .googleButton{justify-content:center;width:100%}.switchAuth{text-align:center;color:var(--muted);font-size:14px;margin:20px 0 0}.switchAuth button{border:0;background:transparent;color:#aeb6ff;font-weight:800;cursor:pointer}.authNotice{padding:11px 13px;border-radius:10px;font-size:13px;line-height:1.45;margin-bottom:14px}.errorNotice{background:#ff4d5e12;border:1px solid #ff4d5e42;color:#ff9ba5}.successNotice{background:#4bd88b12;border:1px solid #4bd88b42;color:#8cebb7}.passwordRules{display:flex;flex-wrap:wrap;gap:6px}.passwordRules span{font-size:11px;color:#737c8e;border:1px solid var(--line);border-radius:999px;padding:5px 8px}.passwordRules span.ok{color:#8cebb7;border-color:#4bd88b55;background:#4bd88b0d}.codeInput{text-align:center;letter-spacing:.55em;font-size:24px;font-weight:800;padding-left:calc(14px + .55em)!important}@media(max-width:520px){.authModal{padding:25px 18px;border-radius:18px}.authHeading h2{font-size:28px}}
+
+
+/* === Auth modal viewport/layout fix ===
+   Keeps the full authentication card visible on normal desktop screens,
+   while allowing the page itself to scroll on shorter displays. */
+.auth-overlay,
+.auth-modal-overlay {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  padding: 24px 16px;
+  align-items: flex-start;
+}
+
+.auth-modal,
+.auth-card,
+.auth-dialog {
+  width: min(460px, calc(100vw - 32px));
+  max-height: none;
+  overflow: visible;
+  margin: auto;
+}
+
+@media (min-height: 760px) {
+  .auth-overlay,
+  .auth-modal-overlay {
+    align-items: center;
+  }
+}
+
+@media (max-width: 560px) {
+  .auth-overlay,
+  .auth-modal-overlay {
+    padding: 12px;
+  }
+
+  .auth-modal,
+  .auth-card,
+  .auth-dialog {
+    width: 100%;
+  }
+}
