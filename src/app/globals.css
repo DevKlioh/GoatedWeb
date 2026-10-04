@@ -51,105 +51,127 @@ a{color:inherit}.siteHeader{background:rgba(8,10,13,.88)!important;border-color:
 
 
 /* =========================================================
-   GOATEDPLUGINS HEADER FIX
-   Logo left | Search centered | Sign in/account right
+   PROFILE SIDEBAR CARD — CLEANUP
    ========================================================= */
-.siteHeader {
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 100 !important;
-  width: 100% !important;
-  min-height: 72px !important;
-  padding: 0 28px !important;
-  display: grid !important;
-  grid-template-columns: minmax(220px, 1fr) minmax(320px, 560px) minmax(220px, 1fr) !important;
-  align-items: center !important;
-  gap: 24px !important;
-  box-sizing: border-box !important;
+.rightRail .profileCard {
+  padding: 0 !important;
+  overflow: hidden !important;
 }
 
-.siteHeader .brandLink {
+.rightRail .profileCard .railTitle {
+  min-height: 52px !important;
+  padding: 0 18px !important;
   display: flex !important;
   align-items: center !important;
-  justify-self: start !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  border-bottom: 1px solid #292c30 !important;
+}
+
+.rightRail .profileCard .railTitle b {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  font-size: 14px !important;
+  white-space: nowrap !important;
+}
+
+.rightRail .profileCard .railTitle a {
+  flex-shrink: 0 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: var(--gp-gold) !important;
+}
+
+.rightRail .profileIdentity {
+  padding: 18px !important;
+  display: grid !important;
+  grid-template-columns: 58px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 13px !important;
+}
+
+.rightRail .profileIdentity img,
+.rightRail .profileIdentity .bigAvatar {
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 14px !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+}
+
+.rightRail .profileIdentity > div:last-child {
   min-width: 0 !important;
 }
 
-.siteHeader .headerSearch {
-  display: flex !important;
-  width: 100% !important;
-  max-width: 560px !important;
-  justify-self: center !important;
-  margin: 0 !important;
+.rightRail .profileIdentity strong {
+  display: block !important;
+  margin: 0 0 4px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-size: 16px !important;
+  line-height: 1.2 !important;
 }
 
-.siteHeader .headerRight {
+.rightRail .profileIdentity span {
+  display: block !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: #96999d !important;
+  font-size: 12px !important;
+}
+
+.rightRail .profileStats {
+  margin: 0 18px !important;
+  padding: 15px 0 !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  border-top: 1px solid #292c30 !important;
+  border-bottom: 1px solid #292c30 !important;
+}
+
+.rightRail .profileStats div {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+
+.rightRail .profileStats b {
+  font-size: 17px !important;
+  line-height: 1 !important;
+  color: #f4f4f1 !important;
+}
+
+.rightRail .profileStats span {
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+  color: #8f9296 !important;
+  white-space: nowrap !important;
+}
+
+.rightRail .profileCard .editProfileButton {
   display: flex !important;
   align-items: center !important;
-  justify-content: flex-end !important;
-  justify-self: end !important;
-  gap: 18px !important;
-  margin: 0 !important;
-  min-width: max-content !important;
-}
-
-.siteHeader .headerRight > a {
-  margin: 0 !important;
-  white-space: nowrap !important;
-}
-
-.siteHeader .primaryAuthButton {
-  margin: 0 !important;
+  justify-content: center !important;
   width: auto !important;
-  min-width: 100px !important;
-  padding: 11px 20px !important;
-  white-space: nowrap !important;
+  margin: 16px 18px 18px !important;
+  padding: 11px 14px !important;
+  border: 1px solid #3a3c40 !important;
+  border-radius: 10px !important;
+  background: #171a1e !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  text-decoration: none !important;
+  transition: border-color .2s ease, background .2s ease, color .2s ease !important;
 }
 
-/* Make sure the header logo itself doesn't force a new line. */
-.siteHeader .goatedLogo {
-  width: auto !important;
-  max-width: 230px !important;
-}
-
-@media (max-width: 900px) {
-  .siteHeader {
-    grid-template-columns: auto minmax(180px, 1fr) auto !important;
-    gap: 12px !important;
-    padding: 0 16px !important;
-  }
-
-  .siteHeader .logoWords small {
-    display: none !important;
-  }
-
-  .siteHeader .headerRight > a {
-    display: none !important;
-  }
-}
-
-@media (max-width: 650px) {
-  .siteHeader {
-    grid-template-columns: auto 1fr auto !important;
-    min-height: 64px !important;
-    padding: 0 10px !important;
-  }
-
-  .siteHeader .logoWords {
-    display: none !important;
-  }
-
-  .siteHeader .headerSearch {
-    display: flex !important;
-    min-width: 0 !important;
-  }
-
-  .siteHeader .headerSearch input {
-    min-width: 0 !important;
-  }
-
-  .siteHeader .primaryAuthButton {
-    min-width: auto !important;
-    padding: 10px 13px !important;
-  }
+.rightRail .profileCard .editProfileButton:hover {
+  border-color: #8f7a32 !important;
+  background: rgba(243,213,107,.08) !important;
+  color: var(--gp-gold) !important;
 }
