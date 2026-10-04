@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import DashboardAccountMenu from "@/components/DashboardAccountMenu";
 import HomeSocialFeed from "@/components/HomeSocialFeed";
 import HomeProfileStats from "@/components/HomeProfileStats";
+import LiveSearch from "@/components/LiveSearch";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -77,7 +78,7 @@ export default async function Home() {
 
     <div className="appMain">
       <header className="dashboardTop">
-        <div className="dashboardSearch">⌕ <input placeholder="Search users, plugins, posts..."/><kbd>Ctrl K</kbd></div>
+        <LiveSearch variant="dashboard"/>
         <div className="topActions"><button className="iconButton">♢</button><DashboardAccountMenu name={name} username={username} avatar={avatar} /></div>
       </header>
 
