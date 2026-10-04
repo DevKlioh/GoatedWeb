@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-type Props = { user: { name: string; avatar?: string | null } | null };
+type Props = { user: { name: string; avatar?: string | null; username?: string | null } | null };
 type View = "signin" | "signup" | "verify" | "forgot" | "recovery-code" | "new-password" | "checkemail";
 
 const strongPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
@@ -107,7 +107,28 @@ export default function AuthButton({ user }: Props) {
 
   async function logout() { await supabase.auth.signOut(); router.push("/"); router.refresh(); }
 
-  if (user) return <details className="accountMenu"><summary>{user.avatar ? <img src={user.avatar} alt="" /> : <span className="avatarFallback">{user.name.slice(0,1).toUpperCase()}</span>}<span>{user.name}</span></summary><div className="menuPanel"><a href="/settings">Account Settings</a><button onClick={logout}>Log out</button></div></details>;
+  if (user) return <details className="accountMenu">
+    <summary aria-label="Open account menu">
+      {user.avatar ? <img src={user.avatar} alt="" /> : <span className="avatarFallback">{user.name.slice(0,1).toUpperCase()}</span>}
+      <span>{user.name}</span><span className="menuChevron">⌄</span>
+    </summary>
+    <div className="menuPanel accountDropdown">
+      <div className="accountDropdownHead">
+        {user.avatar ? <img src={user.avatar} alt="" /> : <span className="avatarFallback">{user.name.slice(0,1).toUpperCase()}</span>}
+        <div><strong>{user.name}</strong><small>{user.username ? `@${user.username}` : "GoatedPlugins member"}</small></div>
+      </div>
+      <div className="accountMenuGroup">
+        <a href="/settings"><span>⚙</span><div><b>Account Settings</b><small>Profile and account preferences</small></div></a>
+        <a href="/resources"><span>⬡</span><div><b>Your Resources</b><small>Plugins and resources you own</small></div></a>
+        <a href="/marked"><span>◆</span><div><b>Marked Posts</b><small>Posts you saved for later</small></div></a>
+        <a href="/notifications"><span>●</span><div><b>Notifications</b><small>Mentions, replies, likes and messages</small></div></a>
+      </div>
+      <div className="accountMenuFooter">
+        <a className="uploadQuickLink" href="/resources/upload">＋ Upload Resource</a>
+        <button onClick={logout}>Log out</button>
+      </div>
+    </div>
+  </details>;
 
   const modal = open ? <div className="authOverlay" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
       <section className="authModal" role="dialog" aria-modal="true" aria-label="Account authentication">
