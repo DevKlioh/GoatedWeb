@@ -1,5 +1,5 @@
 "use client";
-import { FormEvent, useMemo, useRef, useState } from "react";
+import {FormEvent, useMemo, useRef, useState,useEffect} from "react";
 import { createClient } from "@/lib/supabase/client";
 import SocialPostCard from "@/components/SocialPostCard";
 
