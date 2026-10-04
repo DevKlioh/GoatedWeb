@@ -13,7 +13,7 @@ export async function GET(_:Request,{params}:{params:Promise<{id:string}>}){
     let allowed=user.id===r.owner_id;
     if(!allowed){const {data:p}=await supabase.from("resource_purchases").select("resource_id").eq("resource_id",r.id).eq("buyer_id",user.id).eq("status","paid").maybeSingle();allowed=!!p;}
     if(!allowed)return NextResponse.json({error:"Purchase required."},{status:403});
-    const service=process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const service=process.env.SUPABASE_SECRET_KEY;
     if(!service)return NextResponse.json({error:"Premium downloads are not configured yet."},{status:503});
     const admin=createAdmin(process.env.NEXT_PUBLIC_SUPABASE_URL!,service,{auth:{persistSession:false}});
     await admin.rpc("increment_resource_download",{resource_uuid:r.id});
