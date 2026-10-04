@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-type Props = { user: { name: string; avatar?: string | null; username?: string | null } | null };
+type Props = { user: { name: string; avatar?: string | null; username?: string | null; role?: string | null } | null };
 type View = "signin" | "signup" | "verify" | "forgot" | "recovery-code" | "new-password" | "checkemail";
 
 const strongPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
@@ -117,17 +117,17 @@ export default function AuthButton({ user }: Props) {
     <div className="menuPanel accountDropdown">
       <div className="accountDropdownHead">
         {user.avatar ? <img src={user.avatar} alt="" /> : <span className="avatarFallback">{user.name.slice(0,1).toUpperCase()}</span>}
-        <div><strong>{user.name}</strong><small>{user.username ? `@${user.username}` : "OrvenSMP member"}</small></div>
+        <div><strong>{user.name}</strong><small>{user.username ? `@${user.username}` : "GoatedPlugins member"}</small></div>
       </div>
       <div className="accountMenuGroup">
         <a href="/settings"><span>⚙</span><div><b>Account Settings</b><small>Profile and account preferences</small></div></a>
-        <a href="/resources"><span>⬡</span><div><b>Resources</b><small>Browse OrvenSMP plugins and resources</small></div></a>
+        <a href="/resources"><span>⬡</span><div><b>Your Resources</b><small>Plugins and resources you own</small></div></a>
         <a href="/marked"><span>◆</span><div><b>Marked Posts</b><small>Posts you saved for later</small></div></a>
         <a href="/notifications"><span>●</span><div><b>Notifications</b><small>Mentions, replies, likes and messages</small></div></a>
         <a href="/messages"><span>✉</span><div><b>Messages</b><small>Your private conversations</small></div></a>
       </div>
       <div className="accountMenuFooter">
-        {user.role==="admin"&&<a className="uploadQuickLink" href="/resources/upload">＋ Upload Resource</a>}
+        <a className="uploadQuickLink" href="/resources/upload">＋ Upload Resource</a>
         <button onClick={logout}>Log out</button>
       </div>
     </div>
@@ -137,7 +137,7 @@ export default function AuthButton({ user }: Props) {
       <section className="authModal" role="dialog" aria-modal="true" aria-label="Account authentication">
         <button className="modalClose" onClick={() => setOpen(false)} aria-label="Close">×</button>
         <div className="authHeading">
-          <span className="eyebrow">ORVENSMP</span>
+          <span className="eyebrow">GOATED WEBSITE</span>
           <h2>{view === "signup" ? "Create your account" : view === "checkemail" ? "Check your email" : view === "verify" ? "Verify your email" : view === "forgot" || view === "recovery-code" || view === "new-password" ? "Recover your account" : "Welcome back"}</h2>
           <p>{view === "checkemail" ? `We sent a confirmation link to ${email}. Open the email and click the link to verify your account.` : view === "verify" ? `Enter the code sent to ${email}.` : view === "recovery-code" ? `Enter the recovery code sent to ${email}.` : view === "new-password" ? "Choose a new strong password." : "Sign in securely to continue."}</p>
         </div>
