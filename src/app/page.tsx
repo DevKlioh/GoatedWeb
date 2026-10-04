@@ -4,6 +4,7 @@ import AuthButton from "@/components/AuthButton";
 import GoatedLogo from "@/components/GoatedLogo";
 import { createClient } from "@/lib/supabase/server";
 import DashboardAccountMenu from "@/components/DashboardAccountMenu";
+import HomeSocialFeed from "@/components/HomeSocialFeed";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -47,6 +48,13 @@ export default async function Home() {
   const name = profile?.display_name || username;
   const avatar = profile?.avatar_url;
 
+  const { data: postsData } = await supabase
+    .from("posts")
+    .select("id,content,created_at,updated_at,image_url,author_id,profiles:profiles!posts_author_id_fkey_profiles(username,display_name,avatar_url),post_likes(user_id),post_comments(id)")
+    .order("created_at",{ascending:false})
+    .limit(30);
+  const posts = postsData || [];
+
   return <div className="appShell">
     <aside className="sideNav">
       <GoatedLogo/>
@@ -77,15 +85,7 @@ export default async function Home() {
             <div className="welcomePerks"><span>⬡ Share Plugins</span><span>▣ Get Support</span><span>♙ Grow Together</span></div>
           </section>
 
-          <section className="composer">
-            <div className="avatar">{avatar ? <img src={avatar} alt=""/> : name.slice(0,1).toUpperCase()}</div>
-            <div className="composerBody"><div className="fakeInput">What's happening in the GoatedPlugins community?</div><div className="composerActions"><button>▢ Post</button><button>▧ Image</button><button>▥ Poll</button><button>⬡ Plugin</button><button className="goldButton">Post</button></div></div>
-          </section>
-
-          <section className="emptyFeed">
-            <span>⬡</span><h2>Your community feed starts here.</h2>
-            <p>Posts, plugin releases and discussions will appear here as we build the next part of GoatedPlugins.</p>
-          </section>
+          <HomeSocialFeed userId={user.id} name={name} username={username} avatar={avatar} initialPosts={posts as any} />
         </main>
 
         <aside className="rightRail">
