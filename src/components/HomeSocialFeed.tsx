@@ -15,6 +15,7 @@ export default function HomeSocialFeed({userId,name,username,avatar,initialPosts
   const supabase=createClient();
   const [text,setText]=useState("");
   const [mode,setMode]=useState<"post"|"image">("post");
+  const [composerOpen,setComposerOpen]=useState(false);
   const [images,setImages]=useState<File[]>([]);
   const [previews,setPreviews]=useState<string[]>([]);
   const [posts,setPosts]=useState<PostRow[]>(initialPosts);
@@ -74,26 +75,38 @@ export default function HomeSocialFeed({userId,name,username,avatar,initialPosts
     if(data){await supabase.from("marked_posts").delete().eq("post_id",postId).eq("user_id",userId);setMessage("Removed from Marked Posts.");}
     else{await supabase.from("marked_posts").insert({post_id:postId,user_id:userId});setMessage("Saved to Marked Posts.");}
   }
+  useEffect(()=>{
+    if(!composerOpen)return;
+    const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")setComposerOpen(false);};
+    document.addEventListener("keydown",onKey);
+    document.body.classList.add("composerModalOpen");
+    return()=>{document.removeEventListener("keydown",onKey);document.body.classList.remove("composerModalOpen");};
+  },[composerOpen]);
   const remaining=MAX-text.length;
 
   return <>
-    <section className="composer realComposer">
+    <section className="composer realComposer composerLauncher" onClick={()=>setComposerOpen(true)}>
       <div className="avatar">{avatar?<img src={avatar} alt=""/>:name.slice(0,1).toUpperCase()}</div>
-      <form className="composerBody" onSubmit={submit}>
-        <textarea value={text} maxLength={MAX} onChange={e=>setText(e.target.value)} onPaste={paste} placeholder="What's happening in the OrvenSMP community?"/>
-        {previews.length>0&&<div className={`composerGallery count${previews.length}`}>{previews.map((src,i)=><div className="composerGalleryItem" key={src}><img src={src} alt={`Selected upload ${i+1}`}/><button type="button" onClick={()=>removeImage(i)}>×</button></div>)}</div>}
-        {message&&<div className="composerMessage">{message}</div>}
-        <div className="composerActions">
-          <button type="button" className={mode==="post"?"selected":""} onClick={()=>setMode("post")}>▢ Post</button>
-          <button type="button" className={mode==="image"?"selected":""} onClick={()=>fileRef.current?.click()}>▧ Image {images.length?`(${images.length}/5)`:""}</button>
-          <button type="button" disabled title="Polls are coming in the next social update">▥ Poll</button>
-          <button type="button" disabled title="Plugin attachments are coming in the next social update">⬡ Plugin</button>
-          <span className={`composerCount ${remaining<100?"nearLimit":""}`}>{remaining}</span>
-          <button className="goldButton" disabled={busy||(!text.trim()&&!images.length)}>{busy?<><i className="buttonSpinner"/> Posting…</>:"Post"}</button>
-        </div>
-        <input ref={fileRef} hidden type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple onChange={e=>{addImages(Array.from(e.target.files||[]));e.currentTarget.value=""}}/>
-      </form>
+      <button type="button" className="composerPrompt">What's happening in the OrvenSMP community?</button>
     </section>
+
+    {composerOpen&&<div className="composerFocusOverlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setComposerOpen(false)}}>
+      <section className="composerFocusCard" role="dialog" aria-modal="true" aria-label="Create post">
+        <div className="composerFocusHeader"><div><b>Create Post</b><span>Share something with OrvenSMP</span></div><button type="button" className="composerClose" aria-label="Close" onClick={()=>setComposerOpen(false)}>×</button></div>
+        <div className="composerFocusUser"><div className="avatar">{avatar?<img src={avatar} alt=""/>:name.slice(0,1).toUpperCase()}</div><div><b>{name}</b><span>@{username}</span></div></div>
+        <form className="composerBody composerFocusBody" onSubmit={async e=>{await submit(e); if(text.trim()||images.length)setComposerOpen(false);}}>
+          <textarea autoFocus value={text} maxLength={MAX} onChange={e=>setText(e.target.value)} onPaste={paste} placeholder="What's happening in OrvenSMP?"/>
+          {previews.length>0&&<div className={`composerGallery count${previews.length}`}>{previews.map((src,i)=><div className="composerGalleryItem" key={src}><img src={src} alt={`Selected upload ${i+1}`}/><button type="button" onClick={()=>removeImage(i)}>×</button></div>)}</div>}
+          {message&&<div className="composerMessage">{message}</div>}
+          <div className="composerFocusTools">
+            <button type="button" className="addImageButton" onClick={()=>fileRef.current?.click()}>Add image {images.length?`(${images.length}/5)`:""}</button>
+            <span className={`composerCount ${remaining<100?"nearLimit":""}`}>{remaining}</span>
+          </div>
+          <button className="composerFocusPost" disabled={busy||(!text.trim()&&!images.length)}>{busy?<><i className="buttonSpinner"/> Posting…</>:"Post"}</button>
+          <input ref={fileRef} hidden type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple onChange={e=>{addImages(Array.from(e.target.files||[]));e.currentTarget.value=""}}/>
+        </form>
+      </section>
+    </div>}
 
     <section className="socialFeed">
       {posts.length===0?<div className="emptyFeed"><span>⬡</span><h2>Your community feed starts here.</h2><p>Be the first to share something with the OrvenSMP community.</p></div>:

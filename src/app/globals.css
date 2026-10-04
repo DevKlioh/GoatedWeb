@@ -479,3 +479,24 @@ html{scroll-behavior:smooth}.routeProgress{position:fixed;z-index:99999;top:0;le
 
 /* ORVENSMP OFFICIAL SPEAR BRAND */
 .orvenLogoWords{display:grid!important;grid-template-columns:1fr!important;align-items:center!important}.orvenLogoWords b{color:#f5f5f2!important;font-weight:900!important;white-space:nowrap!important}.orvenLogoWords small{grid-column:1!important}.loadingBrand{justify-content:center}.loadingOrvenLogo{width:58px;height:58px;object-fit:contain;filter:drop-shadow(0 0 18px rgba(243,213,107,.24))}.loadingBrand>b{font-size:24px;color:#f5f5f2;letter-spacing:-.5px}
+
+
+/* ORVENSMP FOCUSED POST COMPOSER */
+.composerLauncher{cursor:pointer;align-items:center;transition:border-color .22s ease,background .22s ease,transform .22s ease}
+.composerLauncher:hover{border-color:rgba(243,213,107,.34);background:rgba(255,255,255,.018)}
+.composerPrompt{flex:1;min-height:58px;border:1px solid var(--line);border-radius:14px;background:#0d1117;color:#8d96a5;text-align:left;padding:0 18px;font:inherit;font-size:15px;cursor:text;transition:border-color .2s ease,background .2s ease}
+.composerPrompt:hover{border-color:rgba(243,213,107,.28);background:#10151c}
+.composerFocusOverlay{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:22px;background:rgba(3,5,8,.68);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);animation:orvenOverlayIn .22s ease both}
+.composerFocusCard{width:min(620px,100%);max-height:min(760px,calc(100vh - 44px));overflow:auto;border:1px solid rgba(243,213,107,.22);border-radius:20px;background:#0c1016;box-shadow:0 28px 90px rgba(0,0,0,.58);animation:orvenComposerIn .26s cubic-bezier(.2,.8,.2,1) both}
+.composerFocusHeader{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}
+.composerFocusHeader>div{display:grid;gap:2px}.composerFocusHeader b{font-size:18px}.composerFocusHeader span,.composerFocusUser span{font-size:12px;color:var(--muted)}
+.composerClose{width:34px;height:34px;border:1px solid var(--line);border-radius:10px;background:#12171e;color:#d9dde5;font-size:22px;cursor:pointer;transition:.18s ease}.composerClose:hover{background:#1a2029;transform:rotate(4deg)}
+.composerFocusUser{display:flex;align-items:center;gap:11px;padding:17px 20px 0}.composerFocusUser>div:last-child{display:grid;gap:1px}
+.composerFocusBody{padding:14px 20px 20px}.composerFocusBody textarea{width:100%;min-height:160px;resize:vertical;border:0!important;background:transparent!important;padding:8px 0 14px!important;font-size:17px;line-height:1.55;outline:0;box-shadow:none!important}
+.composerFocusTools{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.addImageButton{border:1px solid rgba(243,213,107,.28);border-radius:10px;background:rgba(243,213,107,.06);color:#f3d56b;padding:9px 13px;font-weight:800;cursor:pointer;transition:.18s ease}.addImageButton:hover{background:rgba(243,213,107,.12);border-color:rgba(243,213,107,.5)}
+.composerFocusTools .composerCount{margin-left:auto}
+.composerFocusPost{width:100%;min-height:46px;border:1px solid #f3d56b;border-radius:12px;background:#f3d56b;color:#17140a;font-weight:900;font-size:15px;cursor:pointer;transition:transform .18s ease,filter .18s ease,opacity .18s ease}.composerFocusPost:hover:not(:disabled){filter:brightness(1.05);transform:translateY(-1px)}.composerFocusPost:disabled{opacity:.38;cursor:not-allowed}
+.composerModalOpen{overflow:hidden}
+@keyframes orvenOverlayIn{from{opacity:0}to{opacity:1}}@keyframes orvenComposerIn{from{opacity:0;transform:translateY(14px) scale(.975)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:640px){.composerFocusOverlay{padding:10px;align-items:end}.composerFocusCard{max-height:92vh;border-radius:18px}.composerFocusBody textarea{min-height:130px}}
