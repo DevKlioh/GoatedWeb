@@ -1,0 +1,23 @@
+GOATED WEBSITE - EMAIL ACCOUNT UPDATE
+
+REPLACE THESE FILES:
+1) AuthButton.tsx -> src/components/AuthButton.tsx
+2) globals.css   -> src/app/globals.css
+3) page.tsx      -> src/app/page.tsx
+
+SUPABASE ONE-TIME SETUP:
+A) SQL Editor -> New query -> paste profiles.sql -> Run.
+B) Authentication -> Providers -> Email: make sure Email provider is enabled and Confirm email is enabled.
+C) Authentication -> Email Templates -> Confirm signup:
+   Change the body so it contains the 6-digit token using: {{ .Token }}
+   Example wording: "Your verification code is: {{ .Token }}"
+D) Authentication -> Email Templates -> Reset password / Recovery:
+   Change the body so it contains the 6-digit token using: {{ .Token }}
+   Example wording: "Your password recovery code is: {{ .Token }}"
+E) Authentication -> Rate Limits: review email/OTP limits before production.
+
+IMPORTANT:
+- Never place service_role, secret keys, Google secret, Discord secret, or database password in GitHub.
+- Passwords are handled by Supabase Auth and are not stored in public.profiles.
+- Username uniqueness is enforced by PostgreSQL using case-insensitive CITEXT.
+- Google and Discord login remain intact.

@@ -1,0 +1,17 @@
+GOATED WEBSITE — AUTH UPDATE ONLY
+
+This ZIP is arranged to match your GitHub repository paths.
+
+UPLOAD / REPLACE:
+- src/components/AuthButton.tsx
+- src/app/globals.css
+- src/app/page.tsx
+
+DO NOT upload this SQL file into your website as application code:
+- supabase/profiles.sql
+  Open it, copy its contents, then run them in:
+  Supabase Dashboard > SQL Editor > New query
+
+SETUP.txt contains additional setup notes.
+
+The folders inside this ZIP show exactly where each website file belongs.
