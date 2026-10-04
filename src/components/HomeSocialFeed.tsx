@@ -1,6 +1,7 @@
 "use client";
 import { FormEvent, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import SocialPostCard from "@/components/SocialPostCard";
 
 type PostRow={
   id:string; content:string; created_at:string; updated_at:string;
@@ -49,6 +50,7 @@ export default function HomeSocialFeed({userId,name,username,avatar,initialPosts
       if(error)throw error;
       setPosts(p=>[{...data,profiles:{username,display_name:name,avatar_url:avatar||null},post_likes:[],post_comments:[]},...p]);
       setText("");setImage(null);setPreview(null);setMode("post");
+      window.dispatchEvent(new CustomEvent("goated:post-count",{detail:{delta:1}}));
     }catch(err:any){setMessage(err.message||"Couldn't publish your post.");}
     finally{setBusy(false);}
   }
@@ -86,23 +88,7 @@ export default function HomeSocialFeed({userId,name,username,avatar,initialPosts
 
     <section className="socialFeed">
       {posts.length===0?<div className="emptyFeed"><span>⬡</span><h2>Your community feed starts here.</h2><p>Be the first to share something with the GoatedPlugins community.</p></div>:
-      posts.map(post=>{
-        const p=post.profiles||{}; const liked=(post.post_likes||[]).some(x=>x.user_id===userId);
-        return <article className="postCard" key={post.id}>
-          <div className="postHeader">
-            <div className="postAvatar">{p.avatar_url?<img src={p.avatar_url} alt=""/>:(p.display_name||"G").slice(0,1).toUpperCase()}</div>
-            <div><b>{p.display_name||p.username||"Goated User"}</b><span>@{p.username||"player"} · {new Date(post.created_at).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</span></div>
-          </div>
-          {post.content&&<p className="postText">{post.content}</p>}
-          {post.image_url&&<img className="postImage" src={post.image_url} alt="Post attachment"/>}
-          <div className="postActions">
-            <button className={liked?"liked":""} onClick={()=>toggleLike(post)}>♡ <span>{post.post_likes?.length||0}</span></button>
-            <button disabled title="Comment UI is next">◯ <span>{post.post_comments?.length||0}</span></button>
-            <button onClick={()=>mark(post.id)}>◇ Mark</button>
-            <button onClick={()=>navigator.clipboard.writeText(`${location.origin}/?post=${post.id}`).then(()=>setMessage("Post link copied."))}>↗ Share</button>
-          </div>
-        </article>
-      })}
+      posts.map(post=><SocialPostCard key={post.id} post={post} currentUserId={userId} onChanged={(kind)=>{if(kind==="delete"){setPosts(x=>x.filter(v=>v.id!==post.id));window.dispatchEvent(new CustomEvent("goated:post-count",{detail:{delta:-1}}));}}}/>)}
     </section>
   </>;
 }

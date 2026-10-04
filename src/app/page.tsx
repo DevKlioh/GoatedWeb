@@ -5,6 +5,7 @@ import GoatedLogo from "@/components/GoatedLogo";
 import { createClient } from "@/lib/supabase/server";
 import DashboardAccountMenu from "@/components/DashboardAccountMenu";
 import HomeSocialFeed from "@/components/HomeSocialFeed";
+import HomeProfileStats from "@/components/HomeProfileStats";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -54,6 +55,11 @@ export default async function Home() {
     .order("created_at",{ascending:false})
     .limit(30);
   const posts = postsData || [];
+  const [{ count: postCount }, { count: followerCount }, { count: followingCount }] = await Promise.all([
+    supabase.from("posts").select("*",{count:"exact",head:true}).eq("author_id",user.id),
+    supabase.from("follows").select("*",{count:"exact",head:true}).eq("following_id",user.id),
+    supabase.from("follows").select("*",{count:"exact",head:true}).eq("follower_id",user.id)
+  ]);
 
   return <div className="appShell">
     <aside className="sideNav">
@@ -92,7 +98,7 @@ export default async function Home() {
           <section className="railCard profileCard">
             <div className="railTitle"><b>♛ Your Profile</b><Link href="/profile/me">View Profile →</Link></div>
             <div className="profileIdentity">{avatar ? <img src={avatar} alt=""/> : <div className="bigAvatar">{name.slice(0,1).toUpperCase()}</div>}<div><strong>{name}</strong><span>@{username}</span></div></div>
-            <div className="profileStats"><div><b>0</b><span>Posts</span></div><div><b>0</b><span>Followers</span></div><div><b>0</b><span>Following</span></div></div>
+            <HomeProfileStats posts={postCount || 0} followers={followerCount || 0} following={followingCount || 0}/>
             <Link className="editProfileButton" href="/settings">✎ Edit Profile</Link>
           </section>
           <section className="railCard"><div className="railTitle"><b>✦ Goated Topics</b></div><div className="topic">#plugins <span>Discover</span></div><div className="topic">#minecraft <span>Community</span></div><div className="topic">#development <span>Build</span></div><div className="topic">#server <span>Discuss</span></div></section>
