@@ -51,7 +51,7 @@ export default async function Home() {
       <GoatedLogo/>
       <nav>
         <Link className="active" href="/">⌂ <span>Home</span></Link>
-        <Link href={`/profile/${username}`}>♙ <span>Profile</span></Link>
+        <Link href="/profile/me">♙ <span>Profile</span></Link>
         <a href="#explore">◇ <span>Explore</span></a>
         <a href="#notifications">♧ <span>Notifications</span></a>
         <a href="#messages">✉ <span>Messages</span></a>
@@ -63,7 +63,7 @@ export default async function Home() {
     <div className="appMain">
       <header className="dashboardTop">
         <div className="dashboardSearch">⌕ <input placeholder="Search users, plugins, posts..."/><kbd>Ctrl K</kbd></div>
-        <div className="topActions"><button className="iconButton">♢</button><Link className="miniAccount" href={`/profile/${username}`}>{avatar ? <img src={avatar} alt=""/> : <span>{name.slice(0,1).toUpperCase()}</span>}<b>{name}</b></Link></div>
+        <div className="topActions"><button className="iconButton">♢</button><Link className="miniAccount" href="/profile/me">{avatar ? <img src={avatar} alt=""/> : <span>{name.slice(0,1).toUpperCase()}</span>}<b>{name}</b></Link></div>
       </header>
 
       <div className="dashboardGrid">
@@ -89,7 +89,7 @@ export default async function Home() {
 
         <aside className="rightRail">
           <section className="railCard profileCard">
-            <div className="railTitle"><b>♛ Your Profile</b><Link href={`/profile/${username}`}>View Profile →</Link></div>
+            <div className="railTitle"><b>♛ Your Profile</b><Link href="/profile/me">View Profile →</Link></div>
             <div className="profileIdentity">{avatar ? <img src={avatar} alt=""/> : <div className="bigAvatar">{name.slice(0,1).toUpperCase()}</div>}<div><strong>{name}</strong><span>@{username}</span></div></div>
             <div className="profileStats"><div><b>0</b><span>Posts</span></div><div><b>0</b><span>Followers</span></div><div><b>0</b><span>Following</span></div></div>
             <Link className="editProfileButton" href="/settings">✎ Edit Profile</Link>
