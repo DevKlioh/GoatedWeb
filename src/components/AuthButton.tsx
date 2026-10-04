@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -108,9 +109,7 @@ export default function AuthButton({ user }: Props) {
 
   if (user) return <details className="accountMenu"><summary>{user.avatar ? <img src={user.avatar} alt="" /> : <span className="avatarFallback">{user.name.slice(0,1).toUpperCase()}</span>}<span>{user.name}</span></summary><div className="menuPanel"><a href="/settings">Account Settings</a><button onClick={logout}>Log out</button></div></details>;
 
-  return <>
-    <button className="primaryAuthButton" onClick={() => { setOpen(true); changeView("signin"); }}>Sign in</button>
-    {open && <div className="authOverlay" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
+  const modal = open ? <div className="authOverlay" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
       <section className="authModal" role="dialog" aria-modal="true" aria-label="Account authentication">
         <button className="modalClose" onClick={() => setOpen(false)} aria-label="Close">×</button>
         <div className="authHeading">
@@ -154,6 +153,10 @@ export default function AuthButton({ user }: Props) {
 
         {view === "new-password" && <form className="authForm" onSubmit={updatePassword}><label>New password<input type="password" required value={password} onChange={e=>setPassword(e.target.value)} autoComplete="new-password" /></label><div className="passwordRules"><span className={password.length>=8?"ok":""}>8+ characters</span><span className={/[A-Z]/.test(password)?"ok":""}>Uppercase</span><span className={/[a-z]/.test(password)?"ok":""}>Lowercase</span><span className={/\d/.test(password)?"ok":""}>Number</span><span className={/[^A-Za-z0-9]/.test(password)?"ok":""}>Symbol</span></div><label>Confirm new password<input type="password" required value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} autoComplete="new-password" /></label><button className="formSubmit" disabled={busy}>{busy?"Updating…":"Update password"}</button></form>}
       </section>
-    </div>}
+    </div> : null;
+
+  return <>
+    <button className="primaryAuthButton" onClick={() => { setOpen(true); changeView("signin"); }}>Sign in</button>
+    {modal && createPortal(modal, document.body)}
   </>;
 }

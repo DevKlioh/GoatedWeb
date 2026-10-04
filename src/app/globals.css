@@ -4,111 +4,20 @@
 .primaryAuthButton{border:0;background:var(--accent);color:#fff;font-weight:800;padding:12px 20px;border-radius:11px;cursor:pointer}.authOverlay{position:fixed;inset:0;background:#000b;backdrop-filter:blur(10px);display:grid;place-items:center;padding:20px;z-index:100}.authModal{position:relative;width:min(100%,480px);max-height:92vh;overflow:auto;background:#0e131d;border:1px solid var(--line);border-radius:22px;padding:30px;box-shadow:0 30px 100px #000}.modalClose{position:absolute;right:16px;top:14px;width:36px;height:36px;border:0;border-radius:10px;background:#ffffff0a;color:var(--muted);font-size:26px;cursor:pointer}.authHeading h2{font-size:32px;letter-spacing:-.035em;margin:9px 0}.authHeading p{color:var(--muted);margin:0 0 22px;line-height:1.5}.authForm{display:flex;flex-direction:column;gap:14px}.authForm label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700;color:#dce0e9}.authForm input{width:100%;border:1px solid var(--line);background:#090d14;color:var(--text);border-radius:11px;padding:13px 14px;outline:none}.authForm input:focus{border-color:#5967f2;box-shadow:0 0 0 3px #5865f21c}.formSubmit{border:0;border-radius:11px;background:var(--accent);color:#fff;font-weight:800;padding:13px;cursor:pointer}.formSubmit:disabled,.textButton:disabled{opacity:.6;cursor:not-allowed}.textButton{border:0;background:transparent;color:#aeb6ff;cursor:pointer;padding:10px 0;font-weight:700}.authDivider{height:1px;background:var(--line);margin:20px 0;position:relative;text-align:center}.authDivider span{position:relative;top:-8px;background:#0e131d;padding:0 10px;color:#687184;font-size:11px;font-weight:800}.socialAuth{display:grid;gap:10px}.socialAuth .discordButton,.socialAuth .googleButton{justify-content:center;width:100%}.switchAuth{text-align:center;color:var(--muted);font-size:14px;margin:20px 0 0}.switchAuth button{border:0;background:transparent;color:#aeb6ff;font-weight:800;cursor:pointer}.authNotice{padding:11px 13px;border-radius:10px;font-size:13px;line-height:1.45;margin-bottom:14px}.errorNotice{background:#ff4d5e12;border:1px solid #ff4d5e42;color:#ff9ba5}.successNotice{background:#4bd88b12;border:1px solid #4bd88b42;color:#8cebb7}.passwordRules{display:flex;flex-wrap:wrap;gap:6px}.passwordRules span{font-size:11px;color:#737c8e;border:1px solid var(--line);border-radius:999px;padding:5px 8px}.passwordRules span.ok{color:#8cebb7;border-color:#4bd88b55;background:#4bd88b0d}.codeInput{text-align:center;letter-spacing:.55em;font-size:24px;font-weight:800;padding-left:calc(14px + .55em)!important}@media(max-width:520px){.authModal{padding:25px 18px;border-radius:18px}.authHeading h2{font-size:28px}}
 
 
-/* === FINAL AUTH DIALOG FIT/CENTER FIX ===
-   Uses the ACTUAL class names from AuthButton.tsx. */
+/* Auth modal is rendered directly under <body> via React portal.
+   This prevents the sticky/backdrop-filter header from becoming its containing block. */
 .authOverlay {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 9999 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 12px !important;
-  overflow: hidden !important;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  overflow: auto;
 }
-
 .authModal {
-  position: relative !important;
-  width: min(460px, calc(100vw - 24px)) !important;
-  height: auto !important;
-  max-height: none !important;
-  overflow: visible !important;
-  margin: 0 !important;
-  padding: 20px 24px !important;
-  border-radius: 18px !important;
-}
-
-/* Compact the sign-in card enough to fit standard laptop/browser heights. */
-.authHeading h2 {
-  font-size: 27px !important;
-  margin: 5px 0 !important;
-}
-.authHeading p {
-  margin: 0 0 12px !important;
-  line-height: 1.35 !important;
-  font-size: 13px !important;
-}
-.authHeading .eyebrow {
-  font-size: 10px !important;
-}
-.authForm {
-  gap: 9px !important;
-}
-.authForm label {
-  gap: 4px !important;
-  font-size: 12px !important;
-}
-.authForm input {
-  padding: 10px 12px !important;
-}
-.formSubmit {
-  padding: 11px !important;
-}
-.textButton {
-  padding: 7px 0 !important;
-}
-.authDivider {
-  margin: 13px 0 !important;
-}
-.socialAuth {
-  gap: 8px !important;
-}
-.socialAuth .discordButton,
-.socialAuth .googleButton {
-  padding: 11px 14px !important;
-}
-.switchAuth {
-  margin: 12px 0 0 !important;
-  font-size: 13px !important;
-}
-.modalClose {
-  right: 12px !important;
-  top: 10px !important;
-  width: 32px !important;
-  height: 32px !important;
-}
-
-/* Signup has more fields, so make its controls slightly tighter without a scrollbar. */
-.passwordRules {
-  gap: 4px !important;
-}
-.passwordRules span {
-  font-size: 10px !important;
-  padding: 3px 6px !important;
-}
-
-/* Very short browser windows: keep the whole card reachable by shrinking spacing,
-   rather than putting a scrollbar inside the card. */
-@media (max-height: 620px) {
-  .authModal {
-    padding: 14px 20px !important;
-    transform: scale(.92) !important;
-    transform-origin: center center !important;
-  }
-  .authHeading h2 { font-size: 24px !important; }
-  .authHeading p { margin-bottom: 8px !important; }
-  .authForm { gap: 7px !important; }
-  .authForm input { padding: 8px 10px !important; }
-  .authDivider { margin: 10px 0 !important; }
-  .socialAuth .discordButton,
-  .socialAuth .googleButton { padding: 9px 12px !important; }
-  .switchAuth { margin-top: 8px !important; }
-}
-
-@media (max-width: 520px) {
-  .authOverlay { padding: 10px !important; }
-  .authModal {
-    width: calc(100vw - 20px) !important;
-    padding: 18px 16px !important;
-  }
+  width: min(100%, 480px);
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  margin: auto;
 }
