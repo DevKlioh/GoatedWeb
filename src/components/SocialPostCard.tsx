@@ -74,7 +74,7 @@ export default function SocialPostCard({post,currentUserId,onChanged}:{post:Soci
   return <article className="postCard">
     <div className="postHeader">
       <Link className="postAvatar" href={`/profile/${encodeURIComponent(p.username||"player")}`}>{p.avatar_url?<img src={p.avatar_url} alt=""/>:(p.display_name||"G").slice(0,1).toUpperCase()}</Link>
-      <div className="postAuthorLine"><Link href={`/profile/${encodeURIComponent(p.username||"player")}`}><b>{p.display_name||p.username||"Goated User"}</b></Link><span>@{p.username||"player"} · {new Date(row.created_at).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}{edited?" · edited":""}</span></div>
+      <div className="postAuthorLine"><Link href={`/profile/${encodeURIComponent(p.username||"player")}`}><b>{p.display_name||p.username||"OrvenSMP User"}</b></Link><span>@{p.username||"player"} · {new Date(row.created_at).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}{edited?" · edited":""}</span></div>
       <div className="postMenuWrap" ref={menuRef}><button className="postMore" aria-label="Post options" onClick={()=>setMenu(v=>!v)}>•••</button>
         {menu&&<div className="postMenu">
           {own?<><button onClick={()=>{setEditing(true);setMenu(false)}}>✎ Edit post</button><button className="danger" onClick={remove}>⌫ Delete post</button></>:currentUserId?<button onClick={toggleFollow}>{following?"✓ Unfollow author":"+ Follow author"}</button>:<button onClick={()=>{setMenu(false);requireAuth()}}>+ Follow author</button>}

@@ -1,7 +1,2 @@
-export default function Loading(){
-  return <div className="globalLoading">
-    <div className="loadingBrand"><span className="loadingGoat">G</span><b>Goated<span>Plugins</span></b></div>
-    <div className="loadingBar"><i/></div>
-    <div className="loadingSkeleton"><i/><i/><i/></div>
-  </div>;
-}
+import Image from "next/image";
+export default function Loading(){return <div className="globalLoading"><div className="loadingBrand"><Image className="loadingOrvenLogo" src="/orvensmp-logo.png" alt="OrvenSMP" width={58} height={58} priority/><b>OrvenSMP</b></div><div className="loadingBar"><i/></div><div className="loadingSkeleton"><i/><i/><i/></div></div>;}

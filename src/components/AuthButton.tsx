@@ -117,7 +117,7 @@ export default function AuthButton({ user }: Props) {
     <div className="menuPanel accountDropdown">
       <div className="accountDropdownHead">
         {user.avatar ? <img src={user.avatar} alt="" /> : <span className="avatarFallback">{user.name.slice(0,1).toUpperCase()}</span>}
-        <div><strong>{user.name}</strong><small>{user.username ? `@${user.username}` : "GoatedPlugins member"}</small></div>
+        <div><strong>{user.name}</strong><small>{user.username ? `@${user.username}` : "OrvenSMP member"}</small></div>
       </div>
       <div className="accountMenuGroup">
         <a href="/settings"><span>⚙</span><div><b>Account Settings</b><small>Profile and account preferences</small></div></a>
@@ -137,7 +137,7 @@ export default function AuthButton({ user }: Props) {
       <section className="authModal" role="dialog" aria-modal="true" aria-label="Account authentication">
         <button className="modalClose" onClick={() => setOpen(false)} aria-label="Close">×</button>
         <div className="authHeading">
-          <span className="eyebrow">GOATED WEBSITE</span>
+          <span className="eyebrow">ORVENSMP</span>
           <h2>{view === "signup" ? "Create your account" : view === "checkemail" ? "Check your email" : view === "verify" ? "Verify your email" : view === "forgot" || view === "recovery-code" || view === "new-password" ? "Recover your account" : "Welcome back"}</h2>
           <p>{view === "checkemail" ? `We sent a confirmation link to ${email}. Open the email and click the link to verify your account.` : view === "verify" ? `Enter the code sent to ${email}.` : view === "recovery-code" ? `Enter the recovery code sent to ${email}.` : view === "new-password" ? "Choose a new strong password." : "Sign in securely to continue."}</p>
         </div>

@@ -87,7 +87,7 @@ export default function ResourceUploader({userId}:{userId:string}){
   return <form className="resourceUploadForm" onSubmit={submit}>
     {error&&<div className="authNotice errorNotice">{error}</div>}
     <section className="uploadPanel twoColFields">
-      <label>Plugin / Resource Name<input value={name} onChange={e=>setName(e.target.value)} maxLength={80} required placeholder="Example: GoatedTeams"/></label>
+      <label>Plugin / Resource Name<input value={name} onChange={e=>setName(e.target.value)} maxLength={80} required placeholder="Example: OrvenTeams"/></label>
       <label>Plugin Version<input value={pluginVersion} onChange={e=>setPluginVersion(e.target.value)} maxLength={30} required placeholder="Example: 1.0.0"/></label>
       <label>Plugin Logo / Icon<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={e=>setIcon(e.target.files?.[0]||null)} required/><small>PNG, JPG, WEBP or GIF • max 5 MB</small></label>
       <label>Plugin File (.jar)<input type="file" accept=".jar,application/java-archive" onChange={e=>setJar(e.target.files?.[0]||null)} required/><small>Maximum 100 MB.</small></label>
