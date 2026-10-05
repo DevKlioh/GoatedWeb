@@ -192,7 +192,7 @@ function Memory({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void}){
   setShowing(true);setTiming(false);setInput([]);setFlash(null);
   let i=0;const step=()=>{if(i>=p.length){setFlash(null);setShowing(false);setTimeLeft(30);setTiming(true);return}setFlash(p[i]);window.setTimeout(()=>{setFlash(null);i++;window.setTimeout(step,260)},520)};window.setTimeout(step,420);
  }
- function startRound(l=level){const p=makePattern(l);setPattern(p);setActive(true);setWrongTile(null);setPenalty(0);playPattern(p)}
+ function startRound(l=level){const p=makePattern(l);setTimeLeft(30);setTiming(false);setPattern(p);setActive(true);setWrongTile(null);setPenalty(0);playPattern(p)}
  function finishWrong(i:number){setWrongTile(i);setFinalScore(score);setActive(false);setTiming(false);if(score)onScore(score);window.setTimeout(()=>setGameOver(true),180)}
  function hit(i:number){
   if(!active||showing||gameOver)return;const pos=input.length;if(pattern[pos]!==i){finishWrong(i);return}
@@ -202,10 +202,14 @@ function Memory({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void}){
  function reset(){setLevel(1);setPattern([]);setInput([]);setActive(false);setShowing(false);setFlash(null);setGameOver(false);setFinalScore(0);setWrongTile(null);setScore(0);setTimeLeft(30);setPenalty(0);setTiming(false);window.setTimeout(()=>startRound(1),120)}
  return <div className="playBox memoryPlayBox"><GameTitle title="Memory Grid" score={score} reset={reset}/>
   <div className="memoryStatus"><span>{!active?"Ready?":showing?"Watch carefully…":timeLeft>=0?"Your turn":"OVERTIME"}</span><b>Level {level}</b></div>
-  <div className={`memoryTimer memoryCountdownVisible ${showing?"waiting":timeLeft<0?"overtime":timeLeft<=10?"warning":""}`}>
-   <div className="memoryCountdownNumber"><strong>{showing?"30":timeLeft>=0?timeLeft:Math.abs(timeLeft)}</strong><em>{showing?"SEC":timeLeft>=0?"SEC LEFT":"SEC OVER"}</em></div>
-   <div className="memoryCountdownInfo"><span>{showing?"Timer starts after the sequence":timeLeft>=0?"Complete the sequence before time runs out":`OVERTIME — ${deductionRate} points deducted every second`}</span><div className="memoryTimerTrack"><i style={{width:`${showing?100:Math.max(0,Math.min(100,timeLeft/30*100))}%`}}/></div>{penalty>0&&<b>-{penalty} points</b>}</div>
-  </div>
+  {active&&<div className="memoryTimerCenter"><div className={`memoryTimer memoryCountdownVisible ${showing?"waiting":timeLeft<0?"overtime":timeLeft<=10?"warning":""}`}>
+   <div className="memoryCountdownNumber"><strong>{showing?"—":timeLeft>=0?timeLeft:Math.abs(timeLeft)}</strong><em>{showing?"WAIT":timeLeft>=0?"SEC LEFT":"SEC OVER"}</em></div>
+   <div className="memoryCountdownInfo">
+    <span>{showing?"Watch the pattern — countdown begins when it finishes.":timeLeft>=0?"Complete the sequence before the timer reaches zero.":`OVERTIME — ${deductionRate} points deducted every second.`}</span>
+    <div className="memoryTimerTrack"><i className={showing?"paused":""} style={{width:`${showing?100:Math.max(0,Math.min(100,timeLeft/30*100))}%`}}/></div>
+    {penalty>0&&<b>-{penalty} points</b>}
+   </div>
+  </div></div>}
   <p className="gameHint">{showing?"Watch the sequence. Your 30-second clock starts after the final tile.":timeLeft>=0?"Repeat the tiles in order before the timer runs out.":`Overtime! Level ${level} deducts ${deductionRate} points every second.`}</p>
   <div className={`memoryBoard sequentialMemory ${showing?"isShowing":""}`}>{Array.from({length:16},(_,i)=><button key={i} disabled={showing||!active} className={`${flash===i?"lit pulse":""}${wrongTile===i?" wrong":""}`} onClick={()=>hit(i)}><span/></button>)}</div>
   {!active&&!gameOver&&<button className="gamePrimary" onClick={()=>startRound()}>Start</button>}

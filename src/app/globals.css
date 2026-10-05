@@ -701,24 +701,32 @@ html{scroll-behavior:smooth}.routeProgress{position:fixed;z-index:99999;top:0;le
  .memoryCountdownInfo>span{line-height:1.35}
 }
 
-/* V8.3 — center Memory Grid timer */
-.memoryPlayBox .memoryCountdownVisible{
-  width:min(430px,100%)!important;
-  margin:12px auto 16px!important;
-  align-self:center!important;
-  position:relative!important;
-  left:auto!important;
-  right:auto!important;
-  transform:none!important;
+/* V8.4 — hard-center Memory Grid timer using a dedicated full-width wrapper */
+.memoryPlayBox .memoryTimerCenter{
+  width:100%!important;
+  display:flex!important;
+  justify-content:center!important;
+  align-items:center!important;
+  box-sizing:border-box!important;
+  padding:0!important;
+  margin:12px 0 16px!important;
 }
-.memoryPlayBox .memoryTimer{
-  margin-left:auto!important;
-  margin-right:auto!important;
+.memoryPlayBox .memoryTimerCenter .memoryCountdownVisible{
+  flex:0 1 430px!important;
+  width:min(430px,100%)!important;
+  max-width:430px!important;
+  margin:0!important;
+  position:static!important;
+  inset:auto!important;
+  transform:none!important;
+  box-sizing:border-box!important;
 }
 @media(max-width:620px){
-  .memoryPlayBox .memoryCountdownVisible{
-    width:min(430px,calc(100% - 20px))!important;
-    margin-left:auto!important;
-    margin-right:auto!important;
+  .memoryPlayBox .memoryTimerCenter{
+    padding:0 10px!important;
+  }
+  .memoryPlayBox .memoryTimerCenter .memoryCountdownVisible{
+    width:100%!important;
+    max-width:430px!important;
   }
 }
