@@ -1,3 +1,22 @@
+
+-- V10.3 prerequisite: admin helper MUST exist before policies/functions reference it.
+create or replace function public.orven_is_admin(p_user_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    (select lower(coalesce(role,'')) = 'admin'
+       from public.profiles
+      where id = p_user_id
+      limit 1),
+    false
+  );
+$$;
+grant execute on function public.orven_is_admin(uuid) to authenticated;
+
 -- ORVENSMP SUPPORT + POST LIMITS
 alter table public.profiles add column if not exists post_limit integer not null default 5 check(post_limit>=0 and post_limit<=100000);
 alter table public.profiles add column if not exists credits numeric(14,2) not null default 0 check(credits>=0);
@@ -93,3 +112,86 @@ alter table public.support_donations
 alter table public.support_donations
   add constraint support_donations_allowed_amount_check
   check (amount in (50,100,150,200,300,400,500,1000,1500,2500,5000,10000));
+
+
+-- ============================================================
+-- V10.3 ORVEN SUPPORT — shared support identity + ticket chats
+-- ============================================================
+create table if not exists public.orven_support_tickets (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  category text not null check (category in ('general_inquiry','credits_support','orven_games_support','suggestion')),
+  status text not null default 'open' check (status in ('open','closed')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.orven_support_ticket_messages (
+  id uuid primary key default gen_random_uuid(),
+  ticket_id uuid not null references public.orven_support_tickets(id) on delete cascade,
+  sender_user_id uuid references auth.users(id) on delete set null,
+  sender_kind text not null check (sender_kind in ('user','support')),
+  body text not null check (char_length(trim(body)) between 1 and 4000),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists orven_support_tickets_user_idx on public.orven_support_tickets(user_id, created_at desc);
+create index if not exists orven_support_messages_ticket_idx on public.orven_support_ticket_messages(ticket_id, created_at);
+
+alter table public.orven_support_tickets enable row level security;
+alter table public.orven_support_ticket_messages enable row level security;
+
+drop policy if exists "support tickets user read" on public.orven_support_tickets;
+create policy "support tickets user read" on public.orven_support_tickets
+for select to authenticated using (user_id = auth.uid() or public.orven_is_admin(auth.uid()));
+
+drop policy if exists "support tickets user create" on public.orven_support_tickets;
+create policy "support tickets user create" on public.orven_support_tickets
+for insert to authenticated with check (user_id = auth.uid());
+
+drop policy if exists "support tickets admin update" on public.orven_support_tickets;
+create policy "support tickets admin update" on public.orven_support_tickets
+for update to authenticated using (public.orven_is_admin(auth.uid()))
+with check (public.orven_is_admin(auth.uid()));
+
+drop policy if exists "support messages read" on public.orven_support_ticket_messages;
+create policy "support messages read" on public.orven_support_ticket_messages
+for select to authenticated using (
+  exists(select 1 from public.orven_support_tickets t
+         where t.id=ticket_id and (t.user_id=auth.uid() or public.orven_is_admin(auth.uid())))
+);
+
+drop policy if exists "support messages user create" on public.orven_support_ticket_messages;
+create policy "support messages user create" on public.orven_support_ticket_messages
+for insert to authenticated with check (
+  sender_kind='user' and sender_user_id=auth.uid() and
+  exists(select 1 from public.orven_support_tickets t where t.id=ticket_id and t.user_id=auth.uid() and t.status='open')
+);
+
+drop policy if exists "support messages admin create" on public.orven_support_ticket_messages;
+create policy "support messages admin create" on public.orven_support_ticket_messages
+for insert to authenticated with check (
+  sender_kind='support' and sender_user_id=auth.uid() and public.orven_is_admin(auth.uid())
+);
+
+create or replace function public.orven_open_support_ticket(p_category text)
+returns uuid
+language plpgsql security definer set search_path=public
+as $$
+declare v_id uuid;
+begin
+  if auth.uid() is null then raise exception 'Sign in required'; end if;
+  if p_category not in ('general_inquiry','credits_support','orven_games_support','suggestion') then
+    raise exception 'Invalid support category';
+  end if;
+  insert into public.orven_support_tickets(user_id,category) values(auth.uid(),p_category) returning id into v_id;
+  return v_id;
+end $$;
+grant execute on function public.orven_open_support_ticket(text) to authenticated;
+
+-- Add ticket tables to Supabase Realtime when possible; ignore duplicate-publication membership.
+do $$
+begin
+  begin alter publication supabase_realtime add table public.orven_support_tickets; exception when duplicate_object then null; end;
+  begin alter publication supabase_realtime add table public.orven_support_ticket_messages; exception when duplicate_object then null; end;
+end $$;
