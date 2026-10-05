@@ -670,3 +670,20 @@ html{scroll-behavior:smooth}.routeProgress{position:fixed;z-index:99999;top:0;le
 .memoryTimer>div:first-child{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.memoryTimer span{font-size:20px;font-weight:950;color:#f3d56b}.memoryTimer small{font-size:9px;color:var(--muted)}.memoryTimerTrack{height:5px;margin-top:8px;border-radius:999px;background:#202630;overflow:hidden}.memoryTimerTrack i{display:block;height:100%;border-radius:inherit;background:#f3d56b;transition:width .9s linear}.memoryTimer b{display:block;margin-top:7px;text-align:right;font-size:10px;color:#ff8589}
 .memoryTimer.warning{border-color:rgba(243,213,107,.4);box-shadow:0 0 18px rgba(243,213,107,.07)}.memoryTimer.overtime{border-color:rgba(255,100,110,.45);box-shadow:0 0 22px rgba(255,80,90,.09);animation:memoryOvertime 1s ease-in-out infinite alternate}.memoryTimer.overtime span{color:#ff8589}.memoryTimer.overtime .memoryTimerTrack i{width:100%!important;background:#ff7379}
 @keyframes memoryOvertime{from{transform:scale(1);box-shadow:0 0 10px rgba(255,80,90,.05)}to{transform:scale(1.006);box-shadow:0 0 24px rgba(255,80,90,.13)}}
+
+/* V8.1 — Memory Grid countdown is permanently visible and high-contrast */
+.memoryCountdownVisible{
+ display:flex!important;align-items:center!important;gap:14px!important;
+ width:min(430px,100%)!important;min-height:76px!important;margin:12px auto 16px!important;
+ padding:10px 14px!important;opacity:1!important;visibility:visible!important;
+}
+.memoryCountdownNumber{width:62px;height:56px;flex:0 0 62px;border-radius:11px;background:#151b23;border:1px solid rgba(243,213,107,.28);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.memoryCountdownNumber strong{font-size:27px!important;line-height:27px!important;color:#f3d56b!important;font-weight:950!important;font-variant-numeric:tabular-nums}
+.memoryCountdownNumber em{margin-top:4px;font-size:7px;font-style:normal;font-weight:900;letter-spacing:1px;color:#9ca6b5}
+.memoryCountdownInfo{flex:1;min-width:0}.memoryCountdownInfo>span{display:block;font-size:10px;font-weight:750;color:#d8dee8;margin-bottom:8px}.memoryCountdownInfo>b{display:block;margin-top:6px;font-size:10px;color:#ff8589}
+.memoryCountdownVisible.warning .memoryCountdownNumber{animation:memoryTimerTick .8s ease-in-out infinite alternate;border-color:rgba(243,213,107,.65)}
+.memoryCountdownVisible.overtime .memoryCountdownNumber{border-color:rgba(255,115,121,.65);background:rgba(255,80,90,.08)}
+.memoryCountdownVisible.overtime .memoryCountdownNumber strong{color:#ff7379!important}
+.memoryCountdownVisible.waiting{opacity:.78!important}
+@keyframes memoryTimerTick{from{transform:scale(1)}to{transform:scale(1.045);box-shadow:0 0 16px rgba(243,213,107,.14)}}
+@media(max-width:520px){.memoryCountdownVisible{gap:10px!important;padding:9px 10px!important}.memoryCountdownNumber{width:56px;flex-basis:56px}.memoryCountdownInfo>span{font-size:9px}}

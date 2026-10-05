@@ -202,7 +202,10 @@ function Memory({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void}){
  function reset(){setLevel(1);setPattern([]);setInput([]);setActive(false);setShowing(false);setFlash(null);setGameOver(false);setFinalScore(0);setWrongTile(null);setScore(0);setTimeLeft(30);setPenalty(0);setTiming(false);window.setTimeout(()=>startRound(1),120)}
  return <div className="playBox memoryPlayBox"><GameTitle title="Memory Grid" score={score} reset={reset}/>
   <div className="memoryStatus"><span>{!active?"Ready?":showing?"Watch carefully…":timeLeft>=0?"Your turn":"OVERTIME"}</span><b>Level {level}</b></div>
-  <div className={`memoryTimer ${timeLeft<0?"overtime":timeLeft<=10?"warning":""}`}><div><span>{timeLeft>=0?`${timeLeft}s`:`+${Math.abs(timeLeft)}s`}</span><small>{timeLeft>=0?"Time remaining":`-${deductionRate} points / second`}</small></div><div className="memoryTimerTrack"><i style={{width:`${Math.max(0,Math.min(100,timeLeft/30*100))}%`}}/></div>{penalty>0&&<b>-{penalty} penalty</b>}</div>
+  <div className={`memoryTimer memoryCountdownVisible ${showing?"waiting":timeLeft<0?"overtime":timeLeft<=10?"warning":""}`}>
+   <div className="memoryCountdownNumber"><strong>{showing?"30":timeLeft>=0?timeLeft:Math.abs(timeLeft)}</strong><em>{showing?"SEC":timeLeft>=0?"SEC LEFT":"SEC OVER"}</em></div>
+   <div className="memoryCountdownInfo"><span>{showing?"Timer starts after the sequence":timeLeft>=0?"Complete the sequence before time runs out":`OVERTIME — ${deductionRate} points deducted every second`}</span><div className="memoryTimerTrack"><i style={{width:`${showing?100:Math.max(0,Math.min(100,timeLeft/30*100))}%`}}/></div>{penalty>0&&<b>-{penalty} points</b>}</div>
+  </div>
   <p className="gameHint">{showing?"Watch the sequence. Your 30-second clock starts after the final tile.":timeLeft>=0?"Repeat the tiles in order before the timer runs out.":`Overtime! Level ${level} deducts ${deductionRate} points every second.`}</p>
   <div className={`memoryBoard sequentialMemory ${showing?"isShowing":""}`}>{Array.from({length:16},(_,i)=><button key={i} disabled={showing||!active} className={`${flash===i?"lit pulse":""}${wrongTile===i?" wrong":""}`} onClick={()=>hit(i)}><span/></button>)}</div>
   {!active&&!gameOver&&<button className="gamePrimary" onClick={()=>startRound()}>Start</button>}
