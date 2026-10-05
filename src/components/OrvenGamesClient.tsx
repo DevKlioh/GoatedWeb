@@ -1,5 +1,5 @@
 "use client";
-import {useCallback,useEffect,useMemo,useState} from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 type Game="merge"|"block"|"memory"|"math";
 const info:{id:Game;name:string;desc:string;icon:string}[]=[
  {id:"merge",name:"Orven Merge",desc:"Merge matching tiles and build the biggest value you can.",icon:"◇"},
