@@ -118,13 +118,18 @@ function BlockPuzzle({onScore}:{onScore:(n:number)=>void}){
  const [board,setBoard]=useState<boolean[]>(Array(100).fill(false));
  const [pieces,setPieces]=useState<Shape[]>(()=>[randomShape(),randomShape(),randomShape()]);
  const [score,setScore]=useState(0),[held,setHeld]=useState<number|null>(null),[pointer,setPointer]=useState<{x:number,y:number}|null>(null),[anchor,setAnchor]=useState<number|null>(null);
- const [clearing,setClearing]=useState<number[]>([]),[combo,setCombo]=useState(0),[burst,setBurst]=useState<{id:number;level:number}[]>([]);
+ const [clearing,setClearing]=useState<number[]>([]),[combo,setCombo]=useState(0),[comboStreak,setComboStreak]=useState(0),[lastMultiplier,setLastMultiplier]=useState(1),[burst,setBurst]=useState<{id:number;level:number;mult:number}[]>([]);
  const [gameOver,setGameOver]=useState(false),[finalScore,setFinalScore]=useState(0);
  const boardRef=useRef<HTMLDivElement|null>(null),touchIds=useRef<number[]>([]);
 
  const dims=(s:Shape)=>({w:Math.max(...s.cells.map(c=>c[0]))+1,h:Math.max(...s.cells.map(c=>c[1]))+1});
  function canPlace(shape:Shape,index:number,b=board){const r=Math.floor(index/10),c=index%10;return shape.cells.every(([dx,dy])=>r+dy>=0&&c+dx>=0&&r+dy<10&&c+dx<10&&!b[(r+dy)*10+c+dx])}
- function canAny(b:boolean[],ps:Shape[]){return ps.some(s=>b.some((_,i)=>canPlace(s,i,b)))}
+ function rotations(shape:Shape){
+  const seen=new Set<string>(),out:Shape[]=[];let s=shape;
+  for(let n=0;n<4;n++){const key=[...s.cells].sort((a,b)=>a[1]-b[1]||a[0]-b[0]).map(c=>c.join(",")).join(";");if(!seen.has(key)){seen.add(key);out.push(s)}s=rotate(s)}
+  return out;
+ }
+ function canAny(b:boolean[],ps:Shape[]){return ps.some(s=>rotations(s).some(r=>b.some((_,i)=>canPlace(r,i,b))))}
  function clearLines(b:boolean[]){const rows:number[]=[],cols:number[]=[];for(let r=0;r<10;r++)if(b.slice(r*10,r*10+10).every(Boolean))rows.push(r);for(let c=0;c<10;c++){let full=true;for(let r=0;r<10;r++)if(!b[r*10+c])full=false;if(full)cols.push(c)}const ids=new Set<number>();rows.forEach(r=>{for(let c=0;c<10;c++)ids.add(r*10+c)});cols.forEach(c=>{for(let r=0;r<10;r++)ids.add(r*10+c)});return {ids:[...ids],lines:Math.min(5,rows.length+cols.length)}}
  function cellFromPoint(x:number,y:number,shape:Shape){
   const el=boardRef.current;if(!el)return null;
@@ -142,26 +147,30 @@ function BlockPuzzle({onScore}:{onScore:(n:number)=>void}){
  function place(pieceIndex:number,index:number){
   const shape=pieces[pieceIndex];if(!shape||!canPlace(shape,index))return;
   let next=[...board];shape.cells.forEach(([dx,dy])=>{const r=Math.floor(index/10)+dy,c=index%10+dx;next[r*10+c]=true});
-  const cleared=clearLines(next),lines=cleared.lines,gained=shape.cells.length*10+(lines?lines*lines*100:0),nextScore=score+gained;setScore(nextScore);
+  const cleared=clearLines(next),lines=cleared.lines;
+  const nextStreak=lines?comboStreak+1:0;
+  const multiplier=lines?Math.min(5,1+(nextStreak-1)*0.5):1;
+  const base=shape.cells.length*10+(lines?lines*lines*100:0);
+  const gained=Math.round(base*multiplier),nextScore=score+gained;setScore(nextScore);setComboStreak(nextStreak);setLastMultiplier(multiplier);
   const nextPieces=[...pieces];nextPieces[pieceIndex]=randomShape();setPieces(nextPieces);setHeld(null);setPointer(null);setAnchor(null);
-  if(lines){setBoard(next);setClearing(cleared.ids);setCombo(lines);if(lines>=2){const id=Date.now();setBurst(v=>[...v,{id,level:lines}]);setTimeout(()=>setBurst(v=>v.filter(x=>x.id!==id)),900)}setTimeout(()=>{cleared.ids.forEach(i=>next[i]=false);setBoard([...next]);setClearing([]);setCombo(0);if(!canAny(next,nextPieces)){setFinalScore(nextScore);setGameOver(true);if(nextScore)onScore(nextScore)}},lines===1?420:560+lines*85)}
+  if(lines){const fxLevel=Math.min(5,Math.max(lines,1+Math.floor(nextStreak/2)));setBoard(next);setClearing(cleared.ids);setCombo(fxLevel);const id=Date.now();setBurst(v=>[...v,{id,level:fxLevel,mult:multiplier}]);setTimeout(()=>setBurst(v=>v.filter(x=>x.id!==id)),1150);setTimeout(()=>{cleared.ids.forEach(i=>next[i]=false);setBoard([...next]);setClearing([]);setCombo(0);if(!canAny(next,nextPieces)){setFinalScore(nextScore);setGameOver(true);if(nextScore)onScore(nextScore)}},lines===1?500:650+fxLevel*90)}
   else{setBoard(next);if(!canAny(next,nextPieces)){setFinalScore(nextScore);setGameOver(true);if(nextScore)onScore(nextScore)}}
  }
- function reset(){if(score&&!gameOver)onScore(score);setBoard(Array(100).fill(false));setPieces([randomShape(),randomShape(),randomShape()]);setScore(0);setHeld(null);setPointer(null);setAnchor(null);setClearing([]);setCombo(0);setBurst([]);setGameOver(false);setFinalScore(0)}
+ function reset(){if(score&&!gameOver)onScore(score);setBoard(Array(100).fill(false));setPieces([randomShape(),randomShape(),randomShape()]);setScore(0);setHeld(null);setPointer(null);setAnchor(null);setClearing([]);setCombo(0);setComboStreak(0);setLastMultiplier(1);setBurst([]);setGameOver(false);setFinalScore(0)}
  function begin(idx:number,x:number,y:number){setHeld(idx);setPointer({x,y});setAnchor(cellFromPoint(x,y,pieces[idx]))}
  function movePointer(x:number,y:number){if(held===null)return;setPointer({x,y});setAnchor(cellFromPoint(x,y,pieces[held]))}
  function endPointer(){if(held!==null&&anchor!==null&&canPlace(pieces[held],anchor))place(held,anchor);else{setHeld(null);setPointer(null);setAnchor(null)}}
  const preview=(()=>{if(held===null||anchor===null||!canPlace(pieces[held],anchor))return new Set<number>();const r=Math.floor(anchor/10),c=anchor%10;return new Set(pieces[held].cells.map(([dx,dy])=>(r+dy)*10+c+dx))})();
  useEffect(()=>{const rc=(e:MouseEvent)=>{if(held!==null){e.preventDefault();rotateHeld()}};window.addEventListener("contextmenu",rc);return()=>window.removeEventListener("contextmenu",rc)},[held,pieces]);
  return <div className="playBox blockDragGame" onPointerMove={e=>movePointer(e.clientX,e.clientY)} onPointerUp={endPointer} onPointerCancel={endPointer}>
-  <GameTitle title="Block Puzzle" score={score} reset={reset}/>
+  <GameTitle title="Block Puzzle" score={score} reset={reset}/><div className={`blockComboHud ${comboStreak>0?"active":""}`}><span>COMBO</span><b>{comboStreak>0?`×${lastMultiplier.toFixed(1)}`:"×1.0"}</b><small>{comboStreak>1?`${comboStreak} clears in a row`:"Clear consecutive lines to multiply your score"}</small></div>
   <p className="gameHint">Grab a piece and drop it on the board. Desktop: left-click/drag to move, right-click while holding to rotate. Mobile: drag with one finger and tap with a second finger to rotate.</p>
   <div className="blockPieceTray visualTray">{pieces.map((shape,idx)=>{const d=dims(shape);return <button key={idx} className={`visualPiece ${held===idx?"isHeld":""}`} onPointerDown={e=>{if(e.pointerType==="touch"){touchIds.current.push(e.pointerId);if(held!==null&&touchIds.current.length>=2){e.preventDefault();rotateHeld();return}}e.currentTarget.setPointerCapture?.(e.pointerId);begin(idx,e.clientX,e.clientY)}} onPointerUp={e=>{touchIds.current=touchIds.current.filter(x=>x!==e.pointerId)}}>
    <span className="trayShape" style={{"--pw":d.w,"--ph":d.h} as React.CSSProperties}>{shape.cells.map(([x,y],j)=><i key={j} style={{"--x":x,"--y":y} as React.CSSProperties}/>)}</span>
   </button>})}</div>
   <div ref={boardRef} className={`blockBoard dragBlockBoard preciseBoard combo${combo}`}>
    {board.map((v,i)=><button key={i} className={`${v?"filled":""}${preview.has(i)?" preview":""}${held!==null&&anchor!==null&&preview.size===0&&i===anchor?" invalid":""}`}/>)}
-   {burst.map(x=><div key={x.id} className={`clearBurst level${x.level}`}><span>+{x.level} LINE{x.level>1?"S":""}!</span>{Array.from({length:x.level*7},(_,i)=><i key={i} style={{"--n":i} as React.CSSProperties}/>)}</div>)}
+   {burst.map(x=><div key={x.id} className={`clearBurst level${x.level}`}><span>{x.level>=5?"ORVEN CLEAR!":x.level>=4?"MEGA CLEAR!":x.level>=3?"SUPER CLEAR!":x.level>=2?"DOUBLE CLEAR!":"CLEAR!"}<em>×{x.mult.toFixed(1)}</em></span>{Array.from({length:x.level*7},(_,i)=><i key={i} style={{"--n":i} as React.CSSProperties}/>)}</div>)}
   </div>
   {held!==null&&pointer&&(()=>{const s=pieces[held],d=dims(s);return <div className="liveHeldShape" style={{left:pointer.x,top:pointer.y,"--pw":d.w,"--ph":d.h} as React.CSSProperties}>{s.cells.map(([x,y],j)=><i key={j} style={{"--x":x,"--y":y} as React.CSSProperties}/>)}</div>})()}
   {gameOver&&<div className="memoryGameOverBackdrop"><div className="memoryGameOverModal"><span>BLOCK PUZZLE</span><div className="memoryFailIcon">×</div><h2>No more moves!</h2><h3>Game Over</h3><p>Your final score</p><strong>{finalScore.toLocaleString()}</strong><div className="memoryGameOverActions"><button className="memoryDone" onClick={()=>setGameOver(false)}>Done</button><button className="memoryAgain" onClick={reset}>Play again</button></div></div></div>}
