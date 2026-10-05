@@ -730,3 +730,37 @@ html{scroll-behavior:smooth}.routeProgress{position:fixed;z-index:99999;top:0;le
     max-width:430px!important;
   }
 }
+
+/* V8.5 — center the countdown NUMBER inside its tiny timer square */
+.memoryPlayBox .memoryCountdownNumber{
+  position:relative!important;
+  display:grid!important;
+  grid-template-rows:1fr auto!important;
+  place-items:center!important;
+  align-items:center!important;
+  justify-items:center!important;
+  text-align:center!important;
+  padding:5px 3px 4px!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+.memoryPlayBox .memoryCountdownNumber strong{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  height:100%!important;
+  margin:0!important;
+  padding:0!important;
+  text-align:center!important;
+  line-height:1!important;
+  transform:none!important;
+}
+.memoryPlayBox .memoryCountdownNumber em{
+  display:block!important;
+  width:100%!important;
+  margin:1px 0 0!important;
+  padding:0!important;
+  text-align:center!important;
+  line-height:1!important;
+}
