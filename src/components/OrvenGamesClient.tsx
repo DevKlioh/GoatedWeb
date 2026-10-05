@@ -8,7 +8,7 @@ const info:{id:Game;name:string;desc:string;icon:string}[]=[
  {id:"math",name:"Quick Math",desc:"Solve fast, build a streak and beat the clock.",icon:"+"},
 ];
 export default function OrvenGamesClient({userId,isAdmin}:{userId:string|null,isAdmin:boolean}){
- if(!userId)return <div className="gamesLoginGate"><div><span>ORVEN GAMES</span><h2>Sign in to play</h2><p>Orven Games are available to registered members only. Sign in or create an account to start playing and compete on the leaderboards.</p><a href="/auth">Sign in / Register</a></div></div>;
+ if(!userId)return <div className="gamesLoginGate"><div><span>ORVEN GAMES</span><h2>Sign in to play</h2><p>Orven Games are available to registered members only. Sign in or create an account to start playing and compete on the leaderboards.</p><button type="button" onClick={()=>window.dispatchEvent(new Event("goated:auth"))}>Sign in / Register</button></div></div>;
  const [game,setGame]=useState<Game>("merge");const [scores,setScores]=useState<any[]>([]);const [refresh,setRefresh]=useState(0);
  const load=useCallback(()=>fetch(`/api/game-scores?game=${game}`,{cache:"no-store"}).then(r=>r.json()).then(d=>setScores(d.scores||[])),[game]);
  useEffect(()=>{load()},[load,refresh]);
