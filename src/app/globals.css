@@ -547,3 +547,17 @@ html{scroll-behavior:smooth}.routeProgress{position:fixed;z-index:99999;top:0;le
 .mergeDone{border:1px solid var(--line);background:#151a20;color:#f5f5f2}.mergeAgain{border:1px solid #f3d56b;background:#f3d56b;color:#17140a}.mergeAgain:hover{filter:brightness(1.06)}
 @keyframes mergeFadeIn{from{opacity:0}to{opacity:1}}@keyframes mergeModalIn{from{opacity:0;transform:translateY(18px) scale(.95)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.mergeMovingTile{transition:none!important}.mergeGameOverBackdrop,.mergeGameOverModal{animation:none}}
+
+/* ORVEN MERGE COLLISION-SAFE SMOOTH ENGINE V3 */
+.animatedMergeBoard{--merge-gap:8px;--merge-pad:10px;position:relative}
+.mergeSettledTile,.mergeMotionTile{position:absolute;z-index:3;width:calc((100% - 54px)/4);aspect-ratio:1;left:10px;top:10px;display:grid;place-items:center;border-radius:10px;background:#f3d56b;color:#18140a;font-size:25px;font-weight:900;will-change:transform}
+.mergeSettledTile{transform:translate(calc(var(--col) * (100% + 8px)),calc(var(--row) * (100% + 8px)))}
+.mergeSettledTile.new{animation:orvenTileBorn 210ms cubic-bezier(.16,1,.3,1) both}
+.mergeSettledTile.pop{animation:orvenMergePop 250ms cubic-bezier(.16,1,.3,1) both}
+.mergeMotionTile{transform:translate(calc(var(--from-col) * (100% + 8px)),calc(var(--from-row) * (100% + 8px)));transition:transform 350ms cubic-bezier(.2,.72,.2,1);z-index:4}
+.animatedMergeBoard.isSliding .mergeMotionTile{transform:translate(calc(var(--to-col) * (100% + 8px)),calc(var(--to-row) * (100% + 8px)))}
+.mergeMotionTile.willMerge{z-index:5}
+@keyframes orvenTileBorn{0%{scale:.55;opacity:0}70%{scale:1.06;opacity:1}100%{scale:1}}
+@keyframes orvenMergePop{0%{scale:.92}52%{scale:1.13;filter:brightness(1.12);box-shadow:0 0 26px rgba(243,213,107,.32)}100%{scale:1}}
+.mergeControls button:disabled{opacity:.5;cursor:default}
+@media(prefers-reduced-motion:reduce){.mergeMotionTile{transition:none}.mergeSettledTile.new,.mergeSettledTile.pop{animation:none}}
