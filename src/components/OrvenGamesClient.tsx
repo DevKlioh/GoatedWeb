@@ -28,17 +28,45 @@ export default function OrvenGamesClient({userId,isAdmin}:{userId:string|null,is
 }
 
 function Merge({onScore}:{onScore:(n:number)=>void}){
- const fresh=()=>[2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2].sort(()=>Math.random()-.5);
- const [b,setB]=useState<number[]>(fresh);const [score,setScore]=useState(0);const [best,setBest]=useState(0);
- function reset(){if(score)onScore(score);setB(fresh());setScore(0)}
- function move(dir:string){let a=[...b],gain=0,changed=false;const lines:number[][]=[];
- for(let i=0;i<4;i++)lines.push(dir==="l"||dir==="r"?[0,1,2,3].map(x=>i*4+x):[0,1,2,3].map(y=>y*4+i));
- if(dir==="r"||dir==="d")lines.forEach(x=>x.reverse());
- for(const ids of lines){let vals=ids.map(i=>a[i]).filter(Boolean);for(let j=0;j<vals.length-1;j++)if(vals[j]===vals[j+1]){vals[j]*=2;gain+=vals[j];vals.splice(j+1,1)}
- while(vals.length<4)vals.push(0);ids.forEach((id,j)=>{if(a[id]!==vals[j])changed=true;a[id]=vals[j]})}
- if(changed){const empty=a.map((v,i)=>v?null:i).filter(x=>x!==null) as number[];if(empty.length)a[empty[Math.floor(Math.random()*empty.length)]]=Math.random()<.9?2:4;setB(a);setScore(s=>{const n=s+gain;setBest(x=>Math.max(x,n));return n})}}
- useEffect(()=>{const k=(e:KeyboardEvent)=>{const m:any={ArrowLeft:"l",ArrowRight:"r",ArrowUp:"u",ArrowDown:"d"};if(m[e.key]){e.preventDefault();move(m[e.key])}};window.addEventListener("keydown",k);return()=>window.removeEventListener("keydown",k)});
- return <div className="playBox"><GameTitle title="Orven Merge" score={score} best={best} reset={reset}/><div className="mergeBoard">{b.map((v,i)=><div key={i} className={`mergeTile v${v}`}>{v||""}</div>)}</div><div className="mergeControls"><button onClick={()=>move("u")}>↑</button><div><button onClick={()=>move("l")}>←</button><button onClick={()=>move("d")}>↓</button><button onClick={()=>move("r")}>→</button></div></div></div>
+ type Tile={id:number,value:number,row:number,col:number,merged?:boolean};
+ const spawn=(used:Set<number>,id=Date.now())=>{const empty=[...Array(16)].map((_,i)=>i).filter(i=>!used.has(i));if(!empty.length)return null;const pos=empty[Math.floor(Math.random()*empty.length)];return {id:id+Math.random(),value:Math.random()<.9?2:4,row:Math.floor(pos/4),col:pos%4}};
+ const seed=()=>{const used=new Set<number>();const a=spawn(used,Date.now())!;used.add(a.row*4+a.col);const b=spawn(used,Date.now()+1)!;return[a,b]};
+ const [tiles,setTiles]=useState<Tile[]>(seed),[score,setScore]=useState(0),[best,setBest]=useState(0),[moving,setMoving]=useState(false),[gameOver,setGameOver]=useState(false);
+
+ function canMove(list:Tile[]){const grid=Array.from({length:4},()=>Array(4).fill(0));list.forEach(x=>grid[x.row][x.col]=x.value);for(let r=0;r<4;r++)for(let c=0;c<4;c++){if(!grid[r][c])return true;if(r<3&&grid[r][c]===grid[r+1][c])return true;if(c<3&&grid[r][c]===grid[r][c+1])return true}return false}
+ function finish(s=score){if(s)onScore(s);setGameOver(true)}
+ function reset(){setTiles(seed());setScore(0);setBest(0);setMoving(false);setGameOver(false)}
+ function move(dir:"l"|"r"|"u"|"d"){
+  if(moving||gameOver)return;
+  const horizontal=dir==="l"||dir==="r",reverse=dir==="r"||dir==="d";
+  const groups:Array<Tile[]>=[[],[],[],[]];tiles.forEach(x=>groups[horizontal?x.row:x.col].push({...x,merged:false}));
+  let gain=0,changed=false;const next:Tile[]=[];
+  for(let line=0;line<4;line++){
+   const arr=groups[line].sort((a,b)=>horizontal?a.col-b.col:a.row-b.row);if(reverse)arr.reverse();
+   const packed:Tile[]=[];
+   for(const tile of arr){const prev=packed[packed.length-1];if(prev&&prev.value===tile.value&&!prev.merged){prev.value*=2;prev.merged=true;gain+=prev.value;changed=true}else packed.push({...tile})}
+   packed.forEach((tile,pos)=>{const target=reverse?3-pos:pos,nr=horizontal?line:target,nc=horizontal?target:line;if(tile.row!==nr||tile.col!==nc)changed=true;next.push({...tile,row:nr,col:nc})});
+  }
+  if(!changed){if(!canMove(tiles))finish();return}
+  setMoving(true);setTiles(next);
+  const nextScore=score+gain;setScore(nextScore);setBest(x=>Math.max(x,nextScore));
+  window.setTimeout(()=>{
+   const used=new Set(next.map(x=>x.row*4+x.col));const born=spawn(used);const final=born?[...next.map(x=>({...x,merged:false})),born]:next.map(x=>({...x,merged:false}));
+   setTiles(final);setMoving(false);
+   window.setTimeout(()=>{if(!canMove(final))finish(nextScore)},230);
+  },330);
+ }
+ useEffect(()=>{const k=(e:KeyboardEvent)=>{const m:Record<string,"l"|"r"|"u"|"d">={ArrowLeft:"l",ArrowRight:"r",ArrowUp:"u",ArrowDown:"d"};if(m[e.key]){e.preventDefault();move(m[e.key])}};window.addEventListener("keydown",k);return()=>window.removeEventListener("keydown",k)});
+
+ return <div className="playBox mergePlayBox"><GameTitle title="Orven Merge" score={score} best={best} reset={reset}/>
+  <div className="mergeBoard animatedMergeBoard">
+   {Array.from({length:16},(_,i)=><div key={i} className="mergeCell"/>)}
+   {tiles.map(tile=><div key={tile.id} className={`mergeMovingTile v${tile.value}${tile.merged?" merged":""}`} style={{"--row":tile.row,"--col":tile.col} as React.CSSProperties}>{tile.value}</div>)}
+  </div>
+  <div className="mergeControls"><button onClick={()=>move("u")}>↑</button><div><button onClick={()=>move("l")}>←</button><button onClick={()=>move("d")}>↓</button><button onClick={()=>move("r")}>→</button></div></div>
+  <p className="mergeTip">Use your arrow keys or the controls.</p>
+  {gameOver&&<div className="mergeGameOverBackdrop"><div className="mergeGameOverModal"><span>ORVEN MERGE</span><h2>Out of moves!</h2><p>Your final score is <b>{score.toLocaleString()}</b>.</p><div><button className="mergeDone" onClick={()=>setGameOver(false)}>Done</button><button className="mergeAgain" onClick={reset}>Play new game</button></div></div></div>}
+ </div>
 }
 function BlockPuzzle({onScore}:{onScore:(n:number)=>void}){
  const [cells,setCells]=useState<boolean[]>(Array(100).fill(false));const [score,setScore]=useState(0);const [piece,setPiece]=useState(()=>Math.floor(Math.random()*3));
