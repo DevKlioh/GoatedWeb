@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Suspense } from "react";
 import NavigationProgress from "@/components/NavigationProgress";
+import ThemeBoot from "@/components/ThemeBoot";
 
 export const metadata: Metadata = {
   title: { default: "OrvenSMP", template: "%s | OrvenSMP" },
@@ -17,5 +18,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body><Suspense fallback={null}><NavigationProgress/></Suspense>{children}</body></html>;
+  return <html lang="en" data-theme="dark" suppressHydrationWarning><body><ThemeBoot/><Suspense fallback={null}><NavigationProgress/></Suspense>{children}</body></html>;
 }
