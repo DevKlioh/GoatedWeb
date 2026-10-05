@@ -22,6 +22,8 @@ export default async function MessagesPage({searchParams}:{searchParams:Promise<
    last_seen_at:me?.last_seen_at||null
  };
 
+ const {data:supportRows}=await supabase.from("support_messages").select("id").eq("user_id",user.id).limit(1);
+
  const {data:messages}=await supabase.from("direct_messages")
    .select("sender_id,recipient_id").or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
    .order("created_at",{ascending:false}).limit(500);
@@ -38,7 +40,9 @@ export default async function MessagesPage({searchParams}:{searchParams:Promise<
    :{data:[] as any[]};
 
  const validPeople=(people||[]).filter((p:any)=>p?.id&&p.id!==user.id);
- const validInitial=q.with&&validPeople.some((p:any)=>p.id===q.with)?q.with:null;
+ if((supportRows||[]).length)validPeople.unshift({id:"__orven_support__",username:"orven-support",display_name:"Orven Support",avatar_url:null,last_seen_at:null} as any);
+ const requested=q.with==="orven-support"?"__orven_support__":q.with;
+ const validInitial=requested&&validPeople.some((p:any)=>p.id===requested)?requested:null;
  const header={name:safeMe.display_name,username:safeMe.username,avatar:safeMe.avatar_url};
 
  return <><PresenceHeartbeat userId={user.id}/><Header user={header}/>

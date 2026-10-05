@@ -4,7 +4,8 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import { createClient } from "@/lib/supabase/client";
 
 type Person={id:string;username:string;display_name:string|null;avatar_url:string|null;last_seen_at:string|null};
-type Msg={id:string;sender_id:string;recipient_id:string;content:string;created_at:string;read_at:string|null};
+type Msg={id:string;sender_id:string;recipient_id:string;content:string;created_at:string;read_at:string|null;support_role?:string};
+const SUPPORT_ID="__orven_support__";
 
 export default function MessagesClient({me,people,initialWith}:{me:Person;people:Person[];initialWith?:string|null}){
  const supabase=useMemo(()=>createClient(),[]);
@@ -30,15 +31,16 @@ export default function MessagesClient({me,people,initialWith}:{me:Person;people
    if(!selected||!me?.id)return;
    setLoading(true);
    try{
-     const {data,error:loadError}=await supabase.from("direct_messages")
-       .select("id,sender_id,recipient_id,content,created_at,read_at")
-       .or(`and(sender_id.eq.${me.id},recipient_id.eq.${selected}),and(sender_id.eq.${selected},recipient_id.eq.${me.id})`)
-       .order("created_at",{ascending:true}).limit(250);
-     if(loadError){setError(loadError.message);return}
-     setMessages((data||[]) as Msg[]);
-     setError("");
-     await supabase.from("direct_messages").update({read_at:new Date().toISOString()})
-       .eq("sender_id",selected).eq("recipient_id",me.id).is("read_at",null);
+     if(selected===SUPPORT_ID){
+       const {data,error:loadError}=await supabase.from("support_messages").select("id,sender_id,sender_role,content,created_at,read_at").eq("user_id",me.id).order("created_at",{ascending:true}).limit(250);
+       if(loadError){setError(loadError.message);return}
+       setMessages((data||[]).map((m:any)=>({id:m.id,sender_id:m.sender_role==="user"?me.id:SUPPORT_ID,recipient_id:m.sender_role==="user"?SUPPORT_ID:me.id,content:m.content,created_at:m.created_at,read_at:m.read_at,support_role:m.sender_role})));
+       setError("");await supabase.from("support_messages").update({read_at:new Date().toISOString()}).eq("user_id",me.id).neq("sender_role","user").is("read_at",null);
+     }else{
+       const {data,error:loadError}=await supabase.from("direct_messages").select("id,sender_id,recipient_id,content,created_at,read_at").or(`and(sender_id.eq.${me.id},recipient_id.eq.${selected}),and(sender_id.eq.${selected},recipient_id.eq.${me.id})`).order("created_at",{ascending:true}).limit(250);
+       if(loadError){setError(loadError.message);return}
+       setMessages((data||[]) as Msg[]);setError("");await supabase.from("direct_messages").update({read_at:new Date().toISOString()}).eq("sender_id",selected).eq("recipient_id",me.id).is("read_at",null);
+     }
    }catch(err){setError(err instanceof Error?err.message:"Unable to load this conversation.")}
    finally{setLoading(false)}
  },[me?.id,selected,supabase]);
@@ -52,11 +54,8 @@ export default function MessagesClient({me,people,initialWith}:{me:Person;people
    if(!content||!selected||!me?.id||busy)return;
    setBusy(true);setError("");
    try{
-     const {data,error:sendError}=await supabase.from("direct_messages")
-       .insert({sender_id:me.id,recipient_id:selected,content})
-       .select("id,sender_id,recipient_id,content,created_at,read_at").single();
-     if(sendError){setError(sendError.message);return}
-     if(data){setMessages(x=>[...x,data as Msg]);setText("")}
+     if(selected===SUPPORT_ID){const {data,error:sendError}=await supabase.from("support_messages").insert({user_id:me.id,sender_id:me.id,sender_role:"user",kind:"general",content}).select("id,sender_id,sender_role,content,created_at,read_at").single();if(sendError){setError(sendError.message);return}if(data){setMessages(x=>[...x,{id:data.id,sender_id:me.id,recipient_id:SUPPORT_ID,content:data.content,created_at:data.created_at,read_at:data.read_at,support_role:"user"}]);setText("")}}
+     else{const {data,error:sendError}=await supabase.from("direct_messages").insert({sender_id:me.id,recipient_id:selected,content}).select("id,sender_id,recipient_id,content,created_at,read_at").single();if(sendError){setError(sendError.message);return}if(data){setMessages(x=>[...x,data as Msg]);setText("")}}
    }catch(err){setError(err instanceof Error?err.message:"Message could not be sent.")}
    finally{setBusy(false)}
  }
@@ -72,7 +71,7 @@ export default function MessagesClient({me,people,initialWith}:{me:Person;people
 
   <section className="messageThread">{person?<><header>
    <div className="dmAvatar">{person.avatar_url?<img src={person.avatar_url} alt=""/>:(person.display_name||person.username).slice(0,1).toUpperCase()}<i className={isOnline(person.last_seen_at)?"online":"offline"}/></div>
-   <div><Link href={`/profile/${encodeURIComponent(person.username)}`}><b>{person.display_name||person.username}</b></Link><span>{isOnline(person.last_seen_at)?"Online now":"Offline"}</span></div>
+   <div>{person.id===SUPPORT_ID?<b>{person.display_name}</b>:<Link href={`/profile/${encodeURIComponent(person.username)}`}><b>{person.display_name||person.username}</b></Link>}<span>{person.id===SUPPORT_ID?"Official OrvenSMP support":isOnline(person.last_seen_at)?"Online now":"Offline"}</span></div>
   </header>
   <div className="messageStream">
    {error&&<div className="messageError"><b>Messages unavailable</b><span>{error}</span></div>}

@@ -11,7 +11,7 @@ type PostRow={
 };
 const MAX=2000;
 
-export default function HomeSocialFeed({userId,name,username,avatar,initialPosts}:{userId:string;name:string;username:string;avatar?:string|null;initialPosts:PostRow[]}){
+export default function HomeSocialFeed({userId,name,username,avatar,initialPosts,initialPostCount,postLimit}:{userId:string;name:string;username:string;avatar?:string|null;initialPosts:PostRow[];initialPostCount:number;postLimit:number}){
   const supabase=createClient();
   const [text,setText]=useState("");
   const [mode,setMode]=useState<"post"|"image">("post");
@@ -21,6 +21,8 @@ export default function HomeSocialFeed({userId,name,username,avatar,initialPosts
   const [posts,setPosts]=useState<PostRow[]>(initialPosts);
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
+  const [myPostCount,setMyPostCount]=useState(initialPostCount);
+  const [requestingLimit,setRequestingLimit]=useState(false);
   const fileRef=useRef<HTMLInputElement>(null);
 
   function addImages(files:File[]){
@@ -43,6 +45,7 @@ export default function HomeSocialFeed({userId,name,username,avatar,initialPosts
   function removeImage(index:number){setImages(x=>x.filter((_,i)=>i!==index));setPreviews(x=>x.filter((_,i)=>i!==index));}
   async function submit(e:FormEvent){
     e.preventDefault(); setMessage("");
+    if(myPostCount>=postLimit)return setMessage(`You have reached your ${postLimit}-post limit. Ask Orven Support for a higher limit.`);
     const content=text.trim();
     if(!content && !images.length)return setMessage("Write something or attach an image first.");
     setBusy(true);
@@ -60,6 +63,7 @@ export default function HomeSocialFeed({userId,name,username,avatar,initialPosts
       if(uploaded.length){const {data:rows,error:imageError}=await supabase.from("post_images").insert(uploaded.map((image_url,position)=>({post_id:data.id,image_url,position}))).select("id,image_url,position");if(imageError)throw imageError;post_images=rows||[];}
       setPosts(p=>[{...data,post_images,profiles:{username,display_name:name,avatar_url:avatar||null},post_likes:[],post_comments:[]},...p]);
       setText("");setImages([]);setPreviews([]);setMode("post");
+      setMyPostCount(v=>v+1);
       window.dispatchEvent(new CustomEvent("goated:post-count",{detail:{delta:1}}));
     }catch(err:any){setMessage(err.message||"Couldn't publish your post.");}
     finally{setBusy(false);}
@@ -75,6 +79,11 @@ export default function HomeSocialFeed({userId,name,username,avatar,initialPosts
     if(data){await supabase.from("marked_posts").delete().eq("post_id",postId).eq("user_id",userId);setMessage("Removed from Marked Posts.");}
     else{await supabase.from("marked_posts").insert({post_id:postId,user_id:userId});setMessage("Saved to Marked Posts.");}
   }
+  async function requestMorePosts(){
+    if(requestingLimit)return;setRequestingLimit(true);setMessage("");
+    const {error}=await supabase.from("support_messages").insert({user_id:userId,sender_id:userId,sender_role:"user",kind:"post_limit",content:`I reached my ${postLimit}-post limit and would like to request a higher posting limit.`});
+    setMessage(error?error.message:"Request sent to Orven Support. An admin can review your posting limit.");setRequestingLimit(false);
+  }
   useEffect(()=>{
     if(!composerOpen)return;
     const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")setComposerOpen(false);};
@@ -85,10 +94,12 @@ export default function HomeSocialFeed({userId,name,username,avatar,initialPosts
   const remaining=MAX-text.length;
 
   return <>
-    <section className="composer realComposer composerLauncher" onClick={()=>setComposerOpen(true)}>
+    <section className={`composer realComposer composerLauncher ${myPostCount>=postLimit?"postLimitReached":""}`} onClick={()=>{if(myPostCount<postLimit)setComposerOpen(true)}}>
       <div className="avatar">{avatar?<img src={avatar} alt=""/>:name.slice(0,1).toUpperCase()}</div>
-      <button type="button" className="composerPrompt">What's happening in the OrvenSMP community?</button>
+      <button type="button" className="composerPrompt">{myPostCount>=postLimit?`Post limit reached (${myPostCount}/${postLimit})`:"What's happening in the OrvenSMP community?"}</button>
+      <span className="postLimitMeter">{myPostCount}/{postLimit}</span>
     </section>
+    {myPostCount>=postLimit&&<div className="postLimitNotice"><span>You have used all {postLimit} of your available posts.</span><button type="button" disabled={requestingLimit} onClick={requestMorePosts}>{requestingLimit?"Sending…":"Request more posts"}</button>{message&&<small>{message}</small>}</div>}
 
     {composerOpen&&<div className="composerFocusOverlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setComposerOpen(false)}}>
       <section className="composerFocusCard" role="dialog" aria-modal="true" aria-label="Create post">
@@ -110,7 +121,7 @@ export default function HomeSocialFeed({userId,name,username,avatar,initialPosts
 
     <section className="socialFeed">
       {posts.length===0?<div className="emptyFeed"><span>⬡</span><h2>Your community feed starts here.</h2><p>Be the first to share something with the OrvenSMP community.</p></div>:
-      posts.map(post=><SocialPostCard key={post.id} post={post} currentUserId={userId} onChanged={(kind)=>{if(kind==="delete"){setPosts(x=>x.filter(v=>v.id!==post.id));window.dispatchEvent(new CustomEvent("goated:post-count",{detail:{delta:-1}}));}}}/>)}
+      posts.map(post=><SocialPostCard key={post.id} post={post} currentUserId={userId} onChanged={(kind)=>{if(kind==="delete"){setPosts(x=>x.filter(v=>v.id!==post.id));if(post.author_id===userId)setMyPostCount(v=>Math.max(0,v-1));window.dispatchEvent(new CustomEvent("goated:post-count",{detail:{delta:-1}}));}}}/>)}
     </section>
   </>;
 }

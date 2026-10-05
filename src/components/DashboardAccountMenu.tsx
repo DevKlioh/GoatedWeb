@@ -22,7 +22,7 @@ export default function DashboardAccountMenu({name,username,avatar,role="member"
      <Link href="/notifications" onClick={()=>setOpen(false)}><span>●</span><div><b>Notifications</b><small>Mentions, replies, likes and messages</small></div></Link>
      <Link href="/messages" onClick={()=>setOpen(false)}><span>✉</span><div><b>Messages</b><small>Your private conversations</small></div></Link>
     </div>
-    <div className="dashboardAccountFooter">{role==="admin"&&<Link href="/resources/upload" onClick={()=>setOpen(false)}>＋ Upload Resource</Link>}<button type="button" onClick={logout}>Log out</button></div>
+    <div className="dashboardAccountFooter">{role==="admin"&&<><Link href="/resources/upload" onClick={()=>setOpen(false)}>＋ Upload Resource</Link><Link href="/support/admin" onClick={()=>setOpen(false)}>♥ Orven Support Admin</Link></>}<button type="button" onClick={logout}>Log out</button></div>
    </div>}
  </div>
 }
