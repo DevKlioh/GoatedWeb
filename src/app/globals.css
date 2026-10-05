@@ -662,3 +662,11 @@ html{scroll-behavior:smooth}.routeProgress{position:fixed;z-index:99999;top:0;le
 .dragBlockBoard.combo4{filter:drop-shadow(0 0 10px rgba(243,213,107,.16))}
 .dragBlockBoard.combo5{animation:orvenBoardPower .72s ease both}
 @keyframes orvenBoardPower{0%,100%{filter:drop-shadow(0 0 0 rgba(243,213,107,0))}42%{filter:drop-shadow(0 0 22px rgba(243,213,107,.34))}}
+
+/* ORVEN V8 — Games main menu + Memory Grid anti-replay pressure */
+.gamesMainMenu{min-height:300px;display:grid;place-items:center;align-content:center;text-align:center;padding:30px}
+.gamesMainMenu>span{font-size:10px;letter-spacing:2px;color:#f3d56b;font-weight:950}.gamesMainMenu h2{margin:8px 0 5px;font-size:28px}.gamesMainMenu p{margin:0;color:var(--muted)}
+.memoryTimer{width:min(430px,100%);margin:10px auto 14px;padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:#0d1218;transition:border-color .25s ease,box-shadow .25s ease}
+.memoryTimer>div:first-child{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.memoryTimer span{font-size:20px;font-weight:950;color:#f3d56b}.memoryTimer small{font-size:9px;color:var(--muted)}.memoryTimerTrack{height:5px;margin-top:8px;border-radius:999px;background:#202630;overflow:hidden}.memoryTimerTrack i{display:block;height:100%;border-radius:inherit;background:#f3d56b;transition:width .9s linear}.memoryTimer b{display:block;margin-top:7px;text-align:right;font-size:10px;color:#ff8589}
+.memoryTimer.warning{border-color:rgba(243,213,107,.4);box-shadow:0 0 18px rgba(243,213,107,.07)}.memoryTimer.overtime{border-color:rgba(255,100,110,.45);box-shadow:0 0 22px rgba(255,80,90,.09);animation:memoryOvertime 1s ease-in-out infinite alternate}.memoryTimer.overtime span{color:#ff8589}.memoryTimer.overtime .memoryTimerTrack i{width:100%!important;background:#ff7379}
+@keyframes memoryOvertime{from{transform:scale(1);box-shadow:0 0 10px rgba(255,80,90,.05)}to{transform:scale(1.006);box-shadow:0 0 24px rgba(255,80,90,.13)}}
