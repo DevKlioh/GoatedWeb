@@ -8,6 +8,7 @@ const info:{id:Game;name:string;desc:string;icon:string}[]=[
  {id:"math",name:"Quick Math",desc:"Solve fast, build a streak and beat the clock.",icon:"+"},
 ];
 export default function OrvenGamesClient({userId,isAdmin}:{userId:string|null,isAdmin:boolean}){
+ if(!userId)return <div className="gamesLoginGate"><div><span>ORVEN GAMES</span><h2>Sign in to play</h2><p>Orven Games are available to registered members only. Sign in or create an account to start playing and compete on the leaderboards.</p><a href="/login">Sign in / Register</a></div></div>;
  const [game,setGame]=useState<Game>("merge");const [scores,setScores]=useState<any[]>([]);const [refresh,setRefresh]=useState(0);
  const load=useCallback(()=>fetch(`/api/game-scores?game=${game}`,{cache:"no-store"}).then(r=>r.json()).then(d=>setScores(d.scores||[])),[game]);
  useEffect(()=>{load()},[load,refresh]);
@@ -159,7 +160,7 @@ function BlockPuzzle({onScore}:{onScore:(n:number)=>void}){
  return <div className="playBox blockDragGame"><GameTitle title="Block Puzzle" score={score} reset={reset}/>
   <p className="gameHint">Grab a shape from the tray and drag it onto the board. Every placed piece is instantly replaced with a new random shape.</p>
   <div className="blockPieceTray dragTray">{pieces.map((shape,idx)=>{const d=dims(shape);return <div key={idx} className={`dragPieceCard ${dragging===idx?"dragging":""}`}
-   draggable onDragStart={e=>{setDragging(idx);e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",String(idx))}} onDragEnd={()=>{setDragging(null);setHover(null)}}>
+   draggable onDragStart={e=>{setDragging(idx);e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",String(idx));const ghost=document.createElement("div");ghost.className="orvenDragGhost";ghost.style.width=`${d.w*30}px`;ghost.style.height=`${d.h*30}px`;shape.cells.forEach(([x,y])=>{const b=document.createElement("i");b.style.left=`${x*30}px`;b.style.top=`${y*30}px`;ghost.appendChild(b)});document.body.appendChild(ghost);e.dataTransfer.setDragImage(ghost,Math.max(15,d.w*15),Math.max(15,d.h*15));window.setTimeout(()=>ghost.remove(),0)}} onDragEnd={()=>{setDragging(null);setHover(null)}}>
     <span className="miniShape" style={{"--pw":d.w,"--ph":d.h} as React.CSSProperties}>{shape.cells.map(([x,y],j)=><i key={j} style={{"--x":x,"--y":y} as React.CSSProperties}/>)}</span>
     <small>{shape.name} · {shape.cells.length}</small>
    </div>})}</div>
