@@ -102,11 +102,65 @@ function BlockPuzzle({onScore}:{onScore:(n:number)=>void}){
  return <div className="playBox"><GameTitle title="Block Puzzle" score={score} reset={reset}/><div className="piecePreview">Next piece: <b>{["■","■■","▦"][piece]}</b></div><div className="blockBoard">{cells.map((v,i)=><button key={i} className={v?"filled":""} onClick={()=>place(i)}/>)}</div></div>
 }
 function Memory({onScore}:{onScore:(n:number)=>void}){
- const [level,setLevel]=useState(1),[pattern,setPattern]=useState<number[]>([]),[input,setInput]=useState<number[]>([]),[show,setShow]=useState(false),[active,setActive]=useState(false);
- function next(l=level){const p=Array.from({length:Math.min(3+l,12)},()=>Math.floor(Math.random()*16));setPattern(p);setInput([]);setShow(true);setActive(true);setTimeout(()=>setShow(false),900+Math.min(l*120,1200))}
- function hit(i:number){if(!active||show)return;const pos=input.length;if(pattern[pos]!==i){onScore((level-1)*100);setActive(false);return}const ni=[...input,i];setInput(ni);if(ni.length===pattern.length){setLevel(l=>l+1);setTimeout(()=>next(level+1),450)}}
- function reset(){if(level>1)onScore((level-1)*100);setLevel(1);setPattern([]);setInput([]);setActive(false);setShow(false)}
- return <div className="playBox"><GameTitle title="Memory Grid" score={(level-1)*100} reset={reset}/><p className="gameHint">{!active?"Press Start and remember the highlighted tiles.":show?"Memorize…":"Repeat the pattern."}</p><div className="memoryBoard">{Array.from({length:16},(_,i)=><button key={i} className={show&&pattern.includes(i)?"lit":""} onClick={()=>hit(i)}/>)}</div>{!active&&<button className="gamePrimary" onClick={()=>next()}>Start</button>}</div>
+ const [level,setLevel]=useState(1),[pattern,setPattern]=useState<number[]>([]),[input,setInput]=useState<number[]>([]);
+ const [active,setActive]=useState(false),[showing,setShowing]=useState(false),[flash,setFlash]=useState<number|null>(null);
+ const [gameOver,setGameOver]=useState(false),[finalScore,setFinalScore]=useState(0),[wrongTile,setWrongTile]=useState<number|null>(null);
+
+ function makePattern(l:number){return Array.from({length:Math.min(2+l,12)},()=>Math.floor(Math.random()*16))}
+ function playPattern(p:number[]){
+  setShowing(true);setInput([]);setFlash(null);
+  let i=0;
+  const step=()=>{
+   if(i>=p.length){setFlash(null);setShowing(false);return}
+   setFlash(p[i]);
+   window.setTimeout(()=>{setFlash(null);i++;window.setTimeout(step,260)},520);
+  };
+  window.setTimeout(step,420);
+ }
+ function startRound(l=level){
+  const p=makePattern(l);setPattern(p);setActive(true);setWrongTile(null);playPattern(p);
+ }
+ function hit(i:number){
+  if(!active||showing||gameOver)return;
+  const pos=input.length;
+  if(pattern[pos]!==i){
+   const s=(level-1)*100;setWrongTile(i);setFinalScore(s);setActive(false);
+   if(s)onScore(s);
+   window.setTimeout(()=>setGameOver(true),180);
+   return;
+  }
+  const next=[...input,i];setInput(next);setFlash(i);
+  window.setTimeout(()=>setFlash(null),150);
+  if(next.length===pattern.length){
+   const nextLevel=level+1;setShowing(true);
+   window.setTimeout(()=>{setLevel(nextLevel);startRound(nextLevel)},650);
+  }
+ }
+ function reset(){
+  setLevel(1);setPattern([]);setInput([]);setActive(false);setShowing(false);setFlash(null);setGameOver(false);setFinalScore(0);setWrongTile(null);
+  window.setTimeout(()=>startRound(1),120);
+ }
+ function done(){setGameOver(false);setWrongTile(null)}
+ return <div className="playBox memoryPlayBox"><GameTitle title="Memory Grid" score={(level-1)*100} reset={reset}/>
+  <div className="memoryStatus">
+   <span>{!active?"Ready?":showing?"Watch carefully…":"Your turn"}</span>
+   <b>Level {level}</b>
+  </div>
+  <p className="gameHint">{!active?"Press Start. Tiles will light up one at a time — remember the exact order.":showing?"Follow each tile as it appears.":"Repeat the tiles in the same order."}</p>
+  <div className={`memoryBoard sequentialMemory ${showing?"isShowing":""}`}>
+   {Array.from({length:16},(_,i)=><button key={i} disabled={showing||!active} className={`${flash===i?"lit pulse":""}${wrongTile===i?" wrong":""}`} onClick={()=>hit(i)}><span/></button>)}
+  </div>
+  {!active&&!gameOver&&<button className="gamePrimary" onClick={()=>startRound()}>Start</button>}
+  {gameOver&&<div className="memoryGameOverBackdrop">
+   <div className="memoryGameOverModal">
+    <span>MEMORY GRID</span><div className="memoryFailIcon">×</div>
+    <h2>You hit the wrong tile!</h2><h3>Game Over</h3>
+    <p>Your final score</p><strong>{finalScore.toLocaleString()}</strong>
+    <small>You reached Level {level}.</small>
+    <div className="memoryGameOverActions"><button className="memoryDone" onClick={done}>Done</button><button className="memoryAgain" onClick={reset}>Play again</button></div>
+   </div>
+  </div>}
+ </div>
 }
 function QuickMath({onScore}:{onScore:(n:number)=>void}){
  const make=()=>{const a=Math.ceil(Math.random()*20),b=Math.ceil(Math.random()*20),op=Math.random()<.5?"+":"×";return {a,b,op,ans:op==="+"?a+b:a*b}};
