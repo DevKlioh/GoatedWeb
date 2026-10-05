@@ -8,7 +8,7 @@ const info:{id:Game;name:string;desc:string;icon:string}[]=[
  {id:"math",name:"Quick Math",desc:"Solve fast, build a streak and beat the clock.",icon:"+"},
 ];
 export default function OrvenGamesClient({userId,isAdmin}:{userId:string|null,isAdmin:boolean}){
- if(!userId)return <div className="gamesLoginGate"><div><span>ORVEN GAMES</span><h2>Sign in to play</h2><p>Orven Games are available to registered members only. Sign in or create an account to start playing and compete on the leaderboards.</p><a href="/login">Sign in / Register</a></div></div>;
+ if(!userId)return <div className="gamesLoginGate"><div><span>ORVEN GAMES</span><h2>Sign in to play</h2><p>Orven Games are available to registered members only. Sign in or create an account to start playing and compete on the leaderboards.</p><a href="/auth">Sign in / Register</a></div></div>;
  const [game,setGame]=useState<Game>("merge");const [scores,setScores]=useState<any[]>([]);const [refresh,setRefresh]=useState(0);
  const load=useCallback(()=>fetch(`/api/game-scores?game=${game}`,{cache:"no-store"}).then(r=>r.json()).then(d=>setScores(d.scores||[])),[game]);
  useEffect(()=>{load()},[load,refresh]);
@@ -127,10 +127,16 @@ function BlockPuzzle({onScore}:{onScore:(n:number)=>void}){
  function canAny(b:boolean[],ps:Shape[]){return ps.some(s=>b.some((_,i)=>canPlace(s,i,b)))}
  function clearLines(b:boolean[]){const rows:number[]=[],cols:number[]=[];for(let r=0;r<10;r++)if(b.slice(r*10,r*10+10).every(Boolean))rows.push(r);for(let c=0;c<10;c++){let full=true;for(let r=0;r<10;r++)if(!b[r*10+c])full=false;if(full)cols.push(c)}const ids=new Set<number>();rows.forEach(r=>{for(let c=0;c<10;c++)ids.add(r*10+c)});cols.forEach(c=>{for(let r=0;r<10;r++)ids.add(r*10+c)});return {ids:[...ids],lines:Math.min(5,rows.length+cols.length)}}
  function cellFromPoint(x:number,y:number,shape:Shape){
-  const el=boardRef.current;if(!el)return null;const r=el.getBoundingClientRect();if(x<r.left||x>r.right||y<r.top||y>r.bottom)return null;
-  const col=Math.floor((x-r.left)/(r.width/10)),row=Math.floor((y-r.top)/(r.height/10));
-  const d=dims(shape);const ac=Math.floor(d.w/2),ar=Math.floor(d.h/2);const rr=row-ar,cc=col-ac;
-  if(rr<0||cc<0||rr+d.h>10||cc+d.w>10)return null;return rr*10+cc;
+  const el=boardRef.current;if(!el)return null;
+  const rect=el.getBoundingClientRect();
+  if(x<rect.left||x>=rect.right||y<rect.top||y>=rect.bottom)return null;
+  const cellW=rect.width/10,cellH=rect.height/10,d=dims(shape);
+  // The pointer represents the visual center of the carried piece. Convert that
+  // center to the exact top-left board anchor used by both preview AND placement.
+  const centerCol=(x-rect.left)/cellW,centerRow=(y-rect.top)/cellH;
+  let col=Math.round(centerCol-d.w/2),row=Math.round(centerRow-d.h/2);
+  col=Math.max(0,Math.min(10-d.w,col));row=Math.max(0,Math.min(10-d.h,row));
+  return row*10+col;
  }
  function rotateHeld(){if(held===null)return;setPieces(ps=>{const n=[...ps];n[held]=rotate(n[held]);return n});setAnchor(null)}
  function place(pieceIndex:number,index:number){
@@ -138,7 +144,7 @@ function BlockPuzzle({onScore}:{onScore:(n:number)=>void}){
   let next=[...board];shape.cells.forEach(([dx,dy])=>{const r=Math.floor(index/10)+dy,c=index%10+dx;next[r*10+c]=true});
   const cleared=clearLines(next),lines=cleared.lines,gained=shape.cells.length*10+(lines?lines*lines*100:0),nextScore=score+gained;setScore(nextScore);
   const nextPieces=[...pieces];nextPieces[pieceIndex]=randomShape();setPieces(nextPieces);setHeld(null);setPointer(null);setAnchor(null);
-  if(lines){setBoard(next);setClearing(cleared.ids);setCombo(lines);if(lines>=2){const id=Date.now();setBurst(v=>[...v,{id,level:lines}]);setTimeout(()=>setBurst(v=>v.filter(x=>x.id!==id)),900)}setTimeout(()=>{cleared.ids.forEach(i=>next[i]=false);setBoard([...next]);setClearing([]);setCombo(0);if(!canAny(next,nextPieces)){setFinalScore(nextScore);setGameOver(true);if(nextScore)onScore(nextScore)}},lines===1?300:420+lines*70)}
+  if(lines){setBoard(next);setClearing(cleared.ids);setCombo(lines);if(lines>=2){const id=Date.now();setBurst(v=>[...v,{id,level:lines}]);setTimeout(()=>setBurst(v=>v.filter(x=>x.id!==id)),900)}setTimeout(()=>{cleared.ids.forEach(i=>next[i]=false);setBoard([...next]);setClearing([]);setCombo(0);if(!canAny(next,nextPieces)){setFinalScore(nextScore);setGameOver(true);if(nextScore)onScore(nextScore)}},lines===1?420:560+lines*85)}
   else{setBoard(next);if(!canAny(next,nextPieces)){setFinalScore(nextScore);setGameOver(true);if(nextScore)onScore(nextScore)}}
  }
  function reset(){if(score&&!gameOver)onScore(score);setBoard(Array(100).fill(false));setPieces([randomShape(),randomShape(),randomShape()]);setScore(0);setHeld(null);setPointer(null);setAnchor(null);setClearing([]);setCombo(0);setBurst([]);setGameOver(false);setFinalScore(0)}
