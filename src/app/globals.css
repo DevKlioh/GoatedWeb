@@ -797,3 +797,8 @@ html{background:var(--bg);transition:background-color .25s ease}body{background:
 
 @media(max-width:900px){.settingsLayout{grid-template-columns:1fr!important}.accountSecurityCard{position:static}.themeChoices{grid-template-columns:1fr}.orvenMenuDrop{right:0!important;width:min(286px,calc(100vw - 28px))!important}}
 @media(max-width:700px){.dashboardTop{padding-left:12px!important;padding-right:12px!important}.orvenMenuButton{min-width:46px!important;padding:0 9px!important}.orvenMenuButton b{display:none}.orvenButtonMark{background:transparent}.settings{padding:0 14px!important}.profileEditForm,.accountSecurityCard,.appearanceCard{padding:17px!important}.settingsSectionTitle{display:grid!important}.themeChoices>button{grid-template-columns:64px 1fr 22px}}
+
+/* V9.1 — resilient Messages UI */
+.messageError{margin:0 auto 12px;width:min(560px,100%);padding:11px 13px;border:1px solid rgba(255,105,105,.32);border-radius:10px;background:rgba(255,80,80,.07);display:grid;gap:3px}
+.messageError b{font-size:11px;color:#ff9a9a}.messageError span{font-size:9px;color:var(--muted,#8f969f);overflow-wrap:anywhere}
+[data-theme="light"] .messageError{background:#fff2f2;border-color:#efc3c3}
