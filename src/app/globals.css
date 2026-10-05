@@ -687,3 +687,38 @@ html{scroll-behavior:smooth}.routeProgress{position:fixed;z-index:99999;top:0;le
 .memoryCountdownVisible.waiting{opacity:.78!important}
 @keyframes memoryTimerTick{from{transform:scale(1)}to{transform:scale(1.045);box-shadow:0 0 16px rgba(243,213,107,.14)}}
 @media(max-width:520px){.memoryCountdownVisible{gap:10px!important;padding:9px 10px!important}.memoryCountdownNumber{width:56px;flex-basis:56px}.memoryCountdownInfo>span{font-size:9px}}
+
+/* V8.2 — Memory timer state/layout correction */
+.memoryCountdownVisible{box-sizing:border-box!important}
+.memoryCountdownNumber strong{min-width:2ch;text-align:center}
+.memoryCountdownInfo{display:block!important}
+.memoryCountdownInfo .memoryTimerTrack{width:100%!important;box-sizing:border-box}
+.memoryCountdownInfo .memoryTimerTrack i{display:block!important;min-width:0;transition:width 1s linear!important}
+.memoryCountdownInfo .memoryTimerTrack i.paused{opacity:.38;animation:memoryPausedBar 1.15s ease-in-out infinite alternate}
+@keyframes memoryPausedBar{from{opacity:.24}to{opacity:.52}}
+@media(max-width:620px){
+ .memoryCountdownVisible{width:100%!important}
+ .memoryCountdownInfo>span{line-height:1.35}
+}
+
+/* V8.3 — center Memory Grid timer */
+.memoryPlayBox .memoryCountdownVisible{
+  width:min(430px,100%)!important;
+  margin:12px auto 16px!important;
+  align-self:center!important;
+  position:relative!important;
+  left:auto!important;
+  right:auto!important;
+  transform:none!important;
+}
+.memoryPlayBox .memoryTimer{
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+@media(max-width:620px){
+  .memoryPlayBox .memoryCountdownVisible{
+    width:min(430px,calc(100% - 20px))!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+}
