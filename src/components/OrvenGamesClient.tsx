@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
-type Game="menu"|"merge"|"block"|"memory"|"math"|"typing"|"dodge";
+type Game="menu"|"merge"|"block"|"memory"|"math"|"typing"|"dodge"|"slice"|"tiles";
 const info:{id:Game;name:string;desc:string;icon:string}[]=[
  {id:"merge",name:"Orven Merge",desc:"Merge matching tiles and build the biggest value you can.",icon:"◇"},
  {id:"block",name:"Block Puzzle",desc:"Place pieces, clear lines and keep the board alive.",icon:"▦"},
@@ -8,6 +8,8 @@ const info:{id:Game;name:string;desc:string;icon:string}[]=[
  {id:"math",name:"Quick Math",desc:"Solve fast, build a streak and beat the clock.",icon:"+"},
  {id:"typing",name:"Orven Typing",desc:"Type falling words before they breach the line.",icon:"Aa"},
  {id:"dodge",name:"Orven Dodge",desc:"Move, survive and dodge an endless storm of hazards.",icon:"✧"},
+ {id:"slice",name:"Orven Slice",desc:"Slash Minecraft loot, build combos and never hit the TNT.",icon:"╱"},
+ {id:"tiles",name:"Orven Tiles",desc:"Hit the rhythm tiles in time and keep your streak alive.",icon:"▥"},
 ];
 export default function OrvenGamesClient({userId,isAdmin}:{userId:string|null,isAdmin:boolean}){
  if(!userId)return <div className="gamesLoginGate"><div><span>ORVEN GAMES</span><h2>Sign in to play</h2><p>Orven Games are available to registered members only. Sign in or create an account to start playing and compete on the leaderboards.</p><button type="button" onClick={()=>window.dispatchEvent(new Event("goated:auth"))}>Sign in / Register</button></div></div>;
@@ -26,6 +28,8 @@ export default function OrvenGamesClient({userId,isAdmin}:{userId:string|null,is
    {game==="math"&&<QuickMath onScore={save}/>}
    {game==="typing"&&<OrvenTyping onScore={save} onMenu={()=>setGame("menu")}/>}
    {game==="dodge"&&<OrvenDodge onScore={save} onMenu={()=>setGame("menu")}/>}
+   {game==="slice"&&<OrvenSlice onScore={save} onMenu={()=>setGame("menu")}/>}
+   {game==="tiles"&&<OrvenTiles onScore={save} onMenu={()=>setGame("menu")}/>}
    {!userId&&<div className="gameSignInNote">You can play as a guest. Sign in if you want your best score saved to the leaderboard.</div>}
   </div>
  </section><aside className="leaderboard"><div className="leaderHead"><div><span>TOP 10</span><h2>{game==="menu"?"Main Menu":info.find(x=>x.id===game)?.name}</h2></div>{isAdmin&&game!=="menu"&&<button onClick={()=>remove()}>Clear all</button>}</div>
@@ -364,5 +368,64 @@ function OrvenDodge({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void})
   </div>
   <p className="gameHint">Move your cursor anywhere inside the arena and your player smoothly follows it. On mobile, touch and drag. Minecraft-inspired hazards attack from all four sides.</p>
   {over&&<div className="mergeGameOverBackdrop"><div className="mergeGameOverModal"><span>ORVEN DODGE</span><h2>You got hit!</h2><p>Your final score is <b>{score.toLocaleString()}</b>.</p><div><button className="mergeDone" onClick={onMenu}>Main Menu</button><button className="mergeAgain" onClick={reset}>Play Again</button></div></div></div>}
+ </div>
+}
+
+function OrvenSlice({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void}){
+ type Obj={id:number;x:number;y:number;vx:number;vy:number;spin:number;kind:string;label:string;bomb:boolean;cut?:boolean};
+ const LOOT=[["diamond","◆"],["emerald","♦"],["gold","G"],["apple","●"],["chest","▣"],["sword","⚔"],["pickaxe","⛏"],["grass","▦"]];
+ const [running,setRunning]=useState(false),[over,setOver]=useState(false),[score,setScore]=useState(0),[combo,setCombo]=useState(0),[objs,setObjs]=useState<Obj[]>([]),[burst,setBurst]=useState<{id:number;x:number;y:number;label:string}[]>([]);
+ const objsR=useRef<Obj[]>([]),scoreR=useRef(0),comboR=useRef(0),raf=useRef<number|null>(null),last=useRef(0),spawn=useRef(0),arena=useRef<HTMLDivElement|null>(null),drag=useRef(false),lastPoint=useRef<{x:number;y:number}|null>(null);
+ const level=(n:number)=>n<1500?1:n<5000?2:n<12000?3:n<25000?4:5;
+ function end(){setRunning(false);setOver(true);drag.current=false;if(raf.current)cancelAnimationFrame(raf.current);if(scoreR.current>0)onScore(Math.floor(scoreR.current))}
+ function reset(){if(raf.current)cancelAnimationFrame(raf.current);objsR.current=[];scoreR.current=0;comboR.current=0;setObjs([]);setBurst([]);setScore(0);setCombo(0);setOver(false);setRunning(true);last.current=performance.now();spawn.current=0}
+ function slash(cx:number,cy:number){
+  if(!running||!arena.current)return;const r=arena.current.getBoundingClientRect(),x=(cx-r.left)/r.width*100,y=(cy-r.top)/r.height*100;
+  const a=lastPoint.current||{x,y};lastPoint.current={x,y};let bomb=false,hit=0;
+  objsR.current=objsR.current.filter(o=>{const dx=x-o.x,dy=y-o.y,dx2=a.x-o.x,dy2=a.y-o.y;const near=Math.min(Math.hypot(dx,dy),Math.hypot(dx2,dy2));if(near<5.3){if(o.bomb){bomb=true;return false}hit++;setBurst(v=>[...v.slice(-12),{id:performance.now()+Math.random(),x:o.x,y:o.y,label:o.label}]);return false}return true});
+  if(bomb){setObjs([...objsR.current]);end();return}
+  if(hit){comboR.current+=hit;const gain=hit*100+Math.min(500,comboR.current*12);scoreR.current+=gain;setScore(scoreR.current);setCombo(comboR.current);setObjs([...objsR.current]);setTimeout(()=>setBurst(v=>v.slice(hit)),420)}
+ }
+ useEffect(()=>{if(!running)return;const tick=(now:number)=>{const dt=Math.min(32,now-last.current);last.current=now;const lv=level(scoreR.current);spawn.current+=dt;
+  let next=objsR.current.map(o=>({...o,x:o.x+o.vx*dt/1000,y:o.y+o.vy*dt/1000,vy:o.vy+20*dt/1000,spin:o.spin+dt*.16})).filter(o=>o.y<112&&o.x>-12&&o.x<112);
+  if(spawn.current>Math.max(300,820-lv*85)){spawn.current=0;const count=Math.random()<.18+lv*.035?2:1;for(let i=0;i<count;i++){const bomb=Math.random()<.09+lv*.012;const loot=LOOT[Math.floor(Math.random()*LOOT.length)];next.push({id:now+Math.random(),x:12+Math.random()*76,y:106,vx:(Math.random()-.5)*(10+lv*2),vy:-(31+Math.random()*9+lv*1.6),spin:Math.random()*180,kind:bomb?"tnt":loot[0],label:bomb?"TNT":loot[1],bomb})}}
+  objsR.current=next;setObjs(next);scoreR.current+=dt*.008;setScore(Math.floor(scoreR.current));raf.current=requestAnimationFrame(tick)};last.current=performance.now();raf.current=requestAnimationFrame(tick);return()=>{if(raf.current)cancelAnimationFrame(raf.current)}},[running]);
+ return <div className="playBox orvenSliceGame"><GameTitle title="Orven Slice" score={score} reset={reset}/>
+  <div className="sliceStats"><span>DIFFICULTY <b>LEVEL {level(score)}</b></span><span>COMBO <b>×{Math.max(1,combo)}</b></span></div>
+  <div ref={arena} className="sliceArena" onPointerDown={e=>{drag.current=true;lastPoint.current=null;e.currentTarget.setPointerCapture(e.pointerId);slash(e.clientX,e.clientY)}} onPointerMove={e=>{if(drag.current||e.pointerType==="mouse")slash(e.clientX,e.clientY)}} onPointerUp={()=>{drag.current=false;lastPoint.current=null}} onPointerLeave={()=>{lastPoint.current=null}}>
+   {!running&&!over&&<div className="gameStartLayer"><b>SLICE THE LOOT</b><p>Swipe through Minecraft loot. Avoid TNT at all costs.</p><button onClick={reset}>Start Slicing</button></div>}
+   {objs.map(o=><div key={o.id} className={`sliceObject slice-${o.kind}`} style={{left:`${o.x}%`,top:`${o.y}%`,transform:`translate(-50%,-50%) rotate(${o.spin}deg)`}}><span>{o.label}</span></div>)}
+   {burst.map(b=><div key={b.id} className="sliceBurst" style={{left:`${b.x}%`,top:`${b.y}%`}}><i/><i/><i/><i/></div>)}
+  </div><p className="gameHint">Drag or sweep your cursor through loot. Chain slices for bigger scores. Slice TNT and the run ends instantly.</p>
+  {over&&<div className="mergeGameOverBackdrop"><div className="mergeGameOverModal"><span>ORVEN SLICE</span><h2>{score?"Boom!":"Game Over"}</h2><p>Final score <b>{score.toLocaleString()}</b>.</p><div><button className="mergeDone" onClick={onMenu}>Main Menu</button><button className="mergeAgain" onClick={reset}>Play Again</button></div></div></div>}
+ </div>
+}
+
+function OrvenTiles({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void}){
+ type Tile={id:number;lane:number;y:number;hit:boolean};
+ const [running,setRunning]=useState(false),[over,setOver]=useState(false),[score,setScore]=useState(0),[combo,setCombo]=useState(0),[tiles,setTiles]=useState<Tile[]>([]),[flash,setFlash]=useState<number|null>(null);
+ const tilesR=useRef<Tile[]>([]),scoreR=useRef(0),comboR=useRef(0),raf=useRef<number|null>(null),last=useRef(0),spawn=useRef(0);
+ const level=(n:number)=>n<2000?1:n<7000?2:n<16000?3:n<32000?4:5;
+ function end(){setRunning(false);setOver(true);if(raf.current)cancelAnimationFrame(raf.current);if(scoreR.current>0)onScore(scoreR.current)}
+ function reset(){if(raf.current)cancelAnimationFrame(raf.current);tilesR.current=[];scoreR.current=0;comboR.current=0;setTiles([]);setScore(0);setCombo(0);setOver(false);setRunning(true);last.current=performance.now();spawn.current=0}
+ function hitLane(lane:number){
+  if(!running)return;const candidates=tilesR.current.filter(t=>t.lane===lane&&!t.hit&&t.y>70&&t.y<96).sort((a,b)=>b.y-a.y);const t=candidates[0];
+  setFlash(lane);setTimeout(()=>setFlash(null),90);
+  if(!t){comboR.current=0;setCombo(0);return}
+  const dist=Math.abs(84-t.y),perfect=dist<4,gain=perfect?150:100;t.hit=true;tilesR.current=tilesR.current.filter(x=>x.id!==t.id);comboR.current++;scoreR.current+=gain+Math.min(400,comboR.current*8);setScore(scoreR.current);setCombo(comboR.current);setTiles([...tilesR.current]);
+ }
+ useEffect(()=>{const kd=(e:KeyboardEvent)=>{const m:{[k:string]:number}={d:0,f:1,j:2,k:3,arrowleft:0,arrowdown:1,arrowup:2,arrowright:3};const l=m[e.key.toLowerCase()];if(l!==undefined&&running){e.preventDefault();hitLane(l)}};window.addEventListener("keydown",kd);return()=>window.removeEventListener("keydown",kd)},[running]);
+ useEffect(()=>{if(!running)return;const tick=(now:number)=>{const dt=Math.min(32,now-last.current);last.current=now;const lv=level(scoreR.current);spawn.current+=dt;const speed=21+lv*3.4;
+  let missed=false,next=tilesR.current.map(t=>({...t,y:t.y+speed*dt/1000})).filter(t=>{if(t.y>101&&!t.hit){missed=true;return false}return true});
+  if(spawn.current>Math.max(330,820-lv*80)){spawn.current=0;next.push({id:now+Math.random(),lane:Math.floor(Math.random()*4),y:-8,hit:false})}
+  tilesR.current=next;setTiles(next);if(missed){end();return}raf.current=requestAnimationFrame(tick)};last.current=performance.now();raf.current=requestAnimationFrame(tick);return()=>{if(raf.current)cancelAnimationFrame(raf.current)}},[running]);
+ return <div className="playBox orvenTilesGame"><GameTitle title="Orven Tiles" score={score} reset={reset}/>
+  <div className="tilesStats"><span>RHYTHM <b>LEVEL {level(score)}</b></span><span>STREAK <b>×{Math.max(1,combo)}</b></span></div>
+  <div className="tilesArena">{!running&&!over&&<div className="gameStartLayer"><b>KEEP THE RHYTHM</b><p>Hit each falling tile when it reaches the gold timing line.</p><button onClick={reset}>Start Rhythm</button></div>}
+   <div className="tilesLanes">{[0,1,2,3].map(l=><button key={l} className={flash===l?"flash":""} onPointerDown={()=>hitLane(l)} aria-label={`Lane ${l+1}`}><span>{["D","F","J","K"][l]}</span></button>)}</div>
+   {tiles.map(t=><div key={t.id} className="rhythmTile" style={{left:`${t.lane*25+2.5}%`,top:`${t.y}%`}}><i/></div>)}
+   <div className="rhythmHitLine"><span>HIT</span></div>
+  </div><p className="gameHint">Use D F J K, arrow keys, or tap the four lanes. Missing a tile ends the run; clean hits build your streak.</p>
+  {over&&<div className="mergeGameOverBackdrop"><div className="mergeGameOverModal"><span>ORVEN TILES</span><h2>Rhythm broken!</h2><p>Final score <b>{score.toLocaleString()}</b>.</p><div><button className="mergeDone" onClick={onMenu}>Main Menu</button><button className="mergeAgain" onClick={reset}>Play Again</button></div></div></div>}
  </div>
 }

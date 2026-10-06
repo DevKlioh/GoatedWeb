@@ -1,6 +1,6 @@
 import {NextRequest,NextResponse} from "next/server";
 import {createClient} from "@/lib/supabase/server";
-const GAMES=["merge","block","memory","math","typing","dodge"];
+const GAMES=["merge","block","memory","math","typing","dodge","slice","tiles"];
 export async function GET(req:NextRequest){
  const game=req.nextUrl.searchParams.get("game")||""; if(!GAMES.includes(game))return NextResponse.json({error:"Invalid game"},{status:400});
  const s=await createClient(); const {data,error}=await s.from("game_scores").select("id,user_id,score,updated_at,profiles:profiles!game_scores_user_id_fkey(username,display_name,avatar_url)").eq("game",game).order("score",{ascending:false}).limit(10);
