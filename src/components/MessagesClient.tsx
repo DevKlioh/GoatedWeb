@@ -15,6 +15,7 @@ export default function MessagesClient({me,people,initialWith}:{me:Person;people
  const [busy,setBusy]=useState(false);
  const [loading,setLoading]=useState(false);
  const [error,setError]=useState("");
+ const [editingId,setEditingId]=useState<string|null>(null); const [editingText,setEditingText]=useState("");
  const [now,setNow]=useState(0);
  const end=useRef<HTMLDivElement>(null);
 
@@ -60,6 +61,29 @@ export default function MessagesClient({me,people,initialWith}:{me:Person;people
    finally{setBusy(false)}
  }
 
+
+ async function deleteMessage(m:Msg){
+   if(m.sender_id!==me.id||!window.confirm("Delete this message permanently?"))return;
+   const table=selected===SUPPORT_ID?"support_messages":"direct_messages";
+   const {error:e}=await supabase.from(table).delete().eq("id",m.id);
+   if(e)return setError(e.message);setMessages(x=>x.filter(v=>v.id!==m.id));
+ }
+ function beginEdit(m:Msg){if(m.sender_id===me.id){setEditingId(m.id);setEditingText(m.content)}}
+ async function saveEdit(m:Msg){
+   const content=editingText.trim();if(!content||content.length>2000)return;
+   const table=selected===SUPPORT_ID?"support_messages":"direct_messages";
+   const {error:e}=await supabase.from(table).update({content}).eq("id",m.id);
+   if(e)return setError(e.message);
+   setMessages(x=>x.map(v=>v.id===m.id?{...v,content}:v));setEditingId(null);setEditingText("");
+ }
+ async function clearConversation(){
+   if(!selected||!window.confirm("Clear this entire conversation permanently?\n\nAll messages in this chat will be deleted. This cannot be undone."))return;
+   setBusy(true);setError("");
+   try{
+     const {error:e}=selected===SUPPORT_ID?await supabase.rpc("orven_clear_support_conversation"):await supabase.rpc("orven_clear_direct_conversation",{p_other:selected});
+     if(e)return setError(e.message);setMessages([]);setEditingId(null);setEditingText("");
+   }finally{setBusy(false)}
+ }
  return <div className="messagesShell">
   <aside className="conversationList">
    <div className="messageSideTitle"><h2>Messages</h2><span>{people.length} people</span></div>
@@ -72,12 +96,14 @@ export default function MessagesClient({me,people,initialWith}:{me:Person;people
   <section className="messageThread">{person?<><header>
    <div className="dmAvatar">{person.avatar_url?<img src={person.avatar_url} alt=""/>:(person.display_name||person.username).slice(0,1).toUpperCase()}<i className={isOnline(person.last_seen_at)?"online":"offline"}/></div>
    <div>{person.id===SUPPORT_ID?<b>{person.display_name}</b>:<Link href={`/profile/${encodeURIComponent(person.username)}`}><b>{person.display_name||person.username}</b></Link>}<span>{person.id===SUPPORT_ID?"Official OrvenSMP support":isOnline(person.last_seen_at)?"Online now":"Offline"}</span></div>
+   <button type="button" className="clearConversationButton" disabled={busy} onClick={clearConversation}>Clear Conversation</button>
   </header>
   <div className="messageStream">
    {error&&<div className="messageError"><b>Messages unavailable</b><span>{error}</span></div>}
    {loading&&!messages.length?<div className="emptyThread"><span>•••</span><h3>Loading conversation</h3></div>:
     messages.length?messages.map(m=><div className={`messageBubble ${m.sender_id===me.id?"mine":"theirs"}`} key={m.id}>
-      <p>{m.content}</p><small suppressHydrationWarning>{new Date(m.created_at).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</small>
+      {editingId===m.id?<div className="messageInlineEditor"><textarea maxLength={2000} value={editingText} onChange={e=>setEditingText(e.target.value)}/><div><button type="button" onClick={()=>{setEditingId(null);setEditingText("")}}>Cancel</button><button type="button" disabled={!editingText.trim()} onClick={()=>saveEdit(m)}>Save</button></div></div>:<p>{m.content}</p>}
+      <div className="messageBubbleMeta"><small suppressHydrationWarning>{new Date(m.created_at).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</small>{m.sender_id===me.id&&editingId!==m.id&&<span className="messageActions"><button type="button" onClick={()=>beginEdit(m)}>Edit</button><button type="button" className="messageDeleteAction" onClick={()=>deleteMessage(m)}>Delete</button></span>}</div>
     </div>):!error&&<div className="emptyThread"><span>✉</span><h3>Start the conversation</h3><p>Send {person.display_name||person.username} a message.</p></div>}
    <div ref={end}/>
   </div>
