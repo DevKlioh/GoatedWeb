@@ -114,7 +114,36 @@ function BlockPuzzle({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void}
   {name:"Stair",cells:[[0,0],[0,1],[1,1],[1,2],[2,2]]},
   {name:"U",cells:[[0,0],[2,0],[0,1],[1,1],[2,1]]}
  ];
- const randomShape=()=>SHAPES[Math.floor(Math.random()*SHAPES.length)];
+ // Difficulty scales with score: easy utility pieces gradually become rare while
+ // larger/awkward pieces become increasingly common. Rotation remains available.
+ const HARD_SHAPES:Shape[]=[
+  {name:"Long L",cells:[[0,0],[0,1],[0,2],[0,3],[1,3],[2,3]]},
+  {name:"Wide T",cells:[[0,0],[1,0],[2,0],[3,0],[1,1],[1,2]]},
+  {name:"Big Z",cells:[[0,0],[1,0],[2,0],[2,1],[3,1],[4,1]]},
+  {name:"Big S",cells:[[2,0],[3,0],[4,0],[0,1],[1,1],[2,1]]},
+  {name:"Hook",cells:[[0,0],[0,1],[0,2],[1,2],[2,2],[2,1]]},
+  {name:"Chunk",cells:[[0,0],[1,0],[2,0],[0,1],[1,1],[1,2]]},
+  {name:"C",cells:[[0,0],[1,0],[2,0],[0,1],[0,2],[1,2],[2,2]]},
+  {name:"Big Plus",cells:[[1,0],[0,1],[1,1],[2,1],[1,2],[1,3]]},
+  {name:"Step 6",cells:[[0,0],[0,1],[1,1],[1,2],[2,2],[2,3]]},
+  {name:"Corner 7",cells:[[0,0],[0,1],[0,2],[0,3],[1,3],[2,3],[3,3]]}
+ ];
+ const difficultyFor=(n:number)=>n<1500?1:n<4000?2:n<8000?3:n<14000?4:5;
+ const randomShape=(n=0)=>{
+   const level=difficultyFor(n);
+   // At high scores, small rescue pieces become deliberately uncommon.
+   const easy=SHAPES.filter(x=>x.cells.length<=3);
+   const medium=SHAPES.filter(x=>x.cells.length>=4&&x.cells.length<=5);
+   const large=[...SHAPES.filter(x=>x.cells.length>=6),...HARD_SHAPES];
+   const roll=Math.random();
+   let pool:Shape[];
+   if(level===1) pool=roll<.42?easy:roll<.90?medium:large;
+   else if(level===2) pool=roll<.24?easy:roll<.72?medium:large;
+   else if(level===3) pool=roll<.12?easy:roll<.52?medium:large;
+   else if(level===4) pool=roll<.06?easy:roll<.34?medium:large;
+   else pool=roll<.02?easy:roll<.20?medium:large;
+   return pool[Math.floor(Math.random()*pool.length)];
+ };
  const rotate=(s:Shape):Shape=>{const pts=s.cells.map(([x,y])=>[-y,x] as [number,number]);const minX=Math.min(...pts.map(p=>p[0])),minY=Math.min(...pts.map(p=>p[1]));return {...s,cells:pts.map(([x,y])=>[x-minX,y-minY] as [number,number])}};
  const [board,setBoard]=useState<boolean[]>(Array(100).fill(false));
  const [pieces,setPieces]=useState<Shape[]>(()=>[randomShape(),randomShape(),randomShape()]);
@@ -153,7 +182,7 @@ function BlockPuzzle({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void}
   const multiplier=lines?Math.min(5,1+(nextStreak-1)*0.5):1;
   const base=shape.cells.length*10+(lines?lines*lines*100:0);
   const gained=Math.round(base*multiplier),nextScore=score+gained;setScore(nextScore);setComboStreak(nextStreak);setLastMultiplier(multiplier);
-  const nextPieces=[...pieces];nextPieces[pieceIndex]=randomShape();setPieces(nextPieces);setHeld(null);setPointer(null);setAnchor(null);
+  const nextPieces=[...pieces];nextPieces[pieceIndex]=randomShape(nextScore);setPieces(nextPieces);setHeld(null);setPointer(null);setAnchor(null);
   if(lines){const fxLevel=Math.min(5,Math.max(lines,1+Math.floor(nextStreak/2)));setBoard(next);setClearing(cleared.ids);setCombo(fxLevel);const id=Date.now();setBurst(v=>[...v,{id,level:fxLevel,mult:multiplier}]);setTimeout(()=>setBurst(v=>v.filter(x=>x.id!==id)),1150);setTimeout(()=>{cleared.ids.forEach(i=>next[i]=false);setBoard([...next]);setClearing([]);setCombo(0);if(!canAny(next,nextPieces)){setFinalScore(nextScore);setGameOver(true);if(nextScore)onScore(nextScore)}},lines===1?500:650+fxLevel*90)}
   else{setBoard(next);if(!canAny(next,nextPieces)){setFinalScore(nextScore);setGameOver(true);if(nextScore)onScore(nextScore)}}
  }
@@ -164,7 +193,7 @@ function BlockPuzzle({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void}
  const preview=(()=>{if(held===null||anchor===null||!canPlace(pieces[held],anchor))return new Set<number>();const r=Math.floor(anchor/10),c=anchor%10;return new Set(pieces[held].cells.map(([dx,dy])=>(r+dy)*10+c+dx))})();
  useEffect(()=>{const rc=(e:MouseEvent)=>{if(held!==null){e.preventDefault();rotateHeld()}};window.addEventListener("contextmenu",rc);return()=>window.removeEventListener("contextmenu",rc)},[held,pieces]);
  return <div className="playBox blockDragGame" onPointerMove={e=>movePointer(e.clientX,e.clientY)} onPointerUp={endPointer} onPointerCancel={endPointer}>
-  <GameTitle title="Block Puzzle" score={score} reset={reset}/><div className={`blockComboHud ${comboStreak>0?"active":""}`}><span>COMBO</span><b>{comboStreak>0?`×${lastMultiplier.toFixed(1)}`:"×1.0"}</b><small>{comboStreak>1?`${comboStreak} clears in a row`:"Clear consecutive lines to multiply your score"}</small></div>
+  <GameTitle title="Block Puzzle" score={score} reset={reset}/><div className="blockPuzzleStatus"><div className={`blockComboHud ${comboStreak>0?"active":""}`}><span>COMBO</span><b>{comboStreak>0?`×${lastMultiplier.toFixed(1)}`:"×1.0"}</b><small>{comboStreak>1?`${comboStreak} clears in a row`:"Clear consecutive lines to multiply your score"}</small></div><div className={`blockDifficulty level${difficultyFor(score)}`}><span>DIFFICULTY</span><b>LEVEL {difficultyFor(score)}</b><small>{difficultyFor(score)===1?"Warm-up":difficultyFor(score)===2?"Getting tighter":difficultyFor(score)===3?"Hard":difficultyFor(score)===4?"Expert":"Nightmare"}</small></div></div>
   <p className="gameHint">Grab a piece and drop it on the board. Desktop: left-click/drag to move, right-click while holding to rotate. Mobile: drag with one finger and tap with a second finger to rotate.</p>
   <div className="blockPieceTray visualTray">{pieces.map((shape,idx)=>{const d=dims(shape);return <button key={idx} className={`visualPiece ${held===idx?"isHeld":""}`} onPointerDown={e=>{if(e.pointerType==="touch"){touchIds.current.push(e.pointerId);if(held!==null&&touchIds.current.length>=2){e.preventDefault();rotateHeld();return}}e.currentTarget.setPointerCapture?.(e.pointerId);begin(idx,e.clientX,e.clientY)}} onPointerUp={e=>{touchIds.current=touchIds.current.filter(x=>x!==e.pointerId)}}>
    <span className="trayShape" style={{"--pw":d.w,"--ph":d.h} as React.CSSProperties}>{shape.cells.map(([x,y],j)=><i key={j} style={{"--x":x,"--y":y} as React.CSSProperties}/>)}</span>
