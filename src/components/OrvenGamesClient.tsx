@@ -1,11 +1,13 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
-type Game="menu"|"merge"|"block"|"memory"|"math";
+type Game="menu"|"merge"|"block"|"memory"|"math"|"typing"|"dodge";
 const info:{id:Game;name:string;desc:string;icon:string}[]=[
  {id:"merge",name:"Orven Merge",desc:"Merge matching tiles and build the biggest value you can.",icon:"◇"},
  {id:"block",name:"Block Puzzle",desc:"Place pieces, clear lines and keep the board alive.",icon:"▦"},
  {id:"memory",name:"Memory Grid",desc:"Remember the glowing pattern as every round gets harder.",icon:"✦"},
  {id:"math",name:"Quick Math",desc:"Solve fast, build a streak and beat the clock.",icon:"+"},
+ {id:"typing",name:"Orven Typing",desc:"Type falling words before they breach the line.",icon:"Aa"},
+ {id:"dodge",name:"Orven Dodge",desc:"Move, survive and dodge an endless storm of hazards.",icon:"✧"},
 ];
 export default function OrvenGamesClient({userId,isAdmin}:{userId:string|null,isAdmin:boolean}){
  if(!userId)return <div className="gamesLoginGate"><div><span>ORVEN GAMES</span><h2>Sign in to play</h2><p>Orven Games are available to registered members only. Sign in or create an account to start playing and compete on the leaderboards.</p><button type="button" onClick={()=>window.dispatchEvent(new Event("goated:auth"))}>Sign in / Register</button></div></div>;
@@ -22,6 +24,8 @@ export default function OrvenGamesClient({userId,isAdmin}:{userId:string|null,is
    {game==="block"&&<BlockPuzzle onScore={save} onMenu={()=>setGame("menu")}/>}
    {game==="memory"&&<Memory onScore={save} onMenu={()=>setGame("menu")}/>}
    {game==="math"&&<QuickMath onScore={save}/>}
+   {game==="typing"&&<OrvenTyping onScore={save} onMenu={()=>setGame("menu")}/>}
+   {game==="dodge"&&<OrvenDodge onScore={save} onMenu={()=>setGame("menu")}/>}
    {!userId&&<div className="gameSignInNote">You can play as a guest. Sign in if you want your best score saved to the leaderboard.</div>}
   </div>
  </section><aside className="leaderboard"><div className="leaderHead"><div><span>TOP 10</span><h2>{game==="menu"?"Main Menu":info.find(x=>x.id===game)?.name}</h2></div>{isAdmin&&game!=="menu"&&<button onClick={()=>remove()}>Clear all</button>}</div>
@@ -254,3 +258,79 @@ function QuickMath({onScore}:{onScore:(n:number)=>void}){
  return <div className="playBox"><GameTitle title="Quick Math" score={score} extra={`${time}s`} reset={start}/><div className="mathQuestion">{q.a} {q.op} {q.b} = ?</div><form className="mathForm" onSubmit={submit}><input inputMode="numeric" value={val} onChange={e=>setVal(e.target.value)} disabled={!running} autoFocus/><button disabled={!running}>Answer</button></form>{!running&&<button className="gamePrimary" onClick={start}>{time===0?"Play again":"Start 30s round"}</button>}</div>
 }
 function GameTitle({title,score,best,extra,reset}:{title:string;score:number;best?:number;extra?:string;reset:()=>void}){return <div className="gameTitle"><div><span>PLAYING</span><h2>{title}</h2></div><div className="gameStats"><b>{score.toLocaleString()}<small>Score</small></b>{best!==undefined&&<b>{best.toLocaleString()}<small>Best</small></b>}{extra&&<b>{extra}<small>Time</small></b>}<button onClick={reset}>New game</button></div></div>}
+function OrvenTyping({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void}){
+ type Falling={id:number;word:string;x:number;y:number;speed:number};
+ const WORDS=["stone","grass","torch","sword","shield","apple","arrow","chest","cave","river","forest","portal","dragon","warden","diamond","emerald","pickaxe","redstone","obsidian","villager","adventure","enchant","fortress","stronghold","netherite","experience","minecraft","orven","survival","ancient","crystal","kingdom","phantom","guardian"];
+ const [running,setRunning]=useState(false),[over,setOver]=useState(false),[score,setScore]=useState(0),[typed,setTyped]=useState(""),[words,setWords]=useState<Falling[]>([]),[combo,setCombo]=useState(0);
+ const scoreRef=useRef(0),wordsRef=useRef<Falling[]>([]),lastRef=useRef(0),spawnRef=useRef(0),rafRef=useRef<number|null>(null),inputRef=useRef<HTMLInputElement|null>(null);
+ const level=(n:number)=>n<1500?1:n<5000?2:n<12000?3:n<25000?4:5;
+ function stop(final:number){setRunning(false);setOver(true);if(rafRef.current)cancelAnimationFrame(rafRef.current);if(final>0)onScore(final)}
+ function reset(){if(rafRef.current)cancelAnimationFrame(rafRef.current);scoreRef.current=0;wordsRef.current=[];setScore(0);setWords([]);setTyped("");setCombo(0);setOver(false);setRunning(true);lastRef.current=performance.now();spawnRef.current=0;setTimeout(()=>inputRef.current?.focus(),30)}
+ useEffect(()=>{
+  if(!running)return;
+  const tick=(now:number)=>{
+   const dt=Math.min(34,now-lastRef.current);lastRef.current=now;const lv=level(scoreRef.current);
+   spawnRef.current+=dt;
+   const every=Math.max(500,1350-lv*145);
+   let next=wordsRef.current.map(w=>({...w,y:w.y+w.speed*dt/1000}));
+   if(spawnRef.current>=every){spawnRef.current=0;const pool=WORDS.filter(w=>lv<3?w.length<=7:lv<5?w.length>=4:w.length>=6);const word=pool[Math.floor(Math.random()*pool.length)]||"orven";next.push({id:now+Math.random(),word,x:5+Math.random()*78,y:-4,speed:8.5+lv*2.35+Math.random()*2.2})}
+   if(next.some(w=>w.y>=89)){wordsRef.current=next;setWords(next);stop(scoreRef.current);return}
+   wordsRef.current=next;setWords(next);rafRef.current=requestAnimationFrame(tick);
+  };lastRef.current=performance.now();rafRef.current=requestAnimationFrame(tick);
+  return()=>{if(rafRef.current)cancelAnimationFrame(rafRef.current)}
+ },[running]);
+ function change(v:string){
+  const clean=v.toLowerCase().replace(/[^a-z]/g,"");setTyped(clean);
+  const hit=wordsRef.current.find(w=>w.word===clean);
+  if(hit){const nextCombo=combo+1,gain=hit.word.length*12+Math.min(200,nextCombo*8);scoreRef.current+=gain;setScore(scoreRef.current);setCombo(nextCombo);wordsRef.current=wordsRef.current.filter(w=>w.id!==hit.id);setWords(wordsRef.current);setTyped("")}
+ }
+ return <div className="playBox orvenTypingGame">
+  <GameTitle title="Orven Typing" score={score} reset={reset}/>
+  <div className="typingStats"><span>DIFFICULTY <b>LEVEL {level(score)}</b></span><span>COMBO <b>×{Math.max(1,combo)}</b></span></div>
+  <div className="typingArena">{!running&&!over&&<div className="gameStartLayer"><b>TYPE TO SURVIVE</b><p>Finish each falling word before it reaches the breach line.</p><button onClick={reset}>Start Typing</button></div>}
+   {words.map(w=><span key={w.id} className={`fallingWord ${typed&&w.word.startsWith(typed)?"matching":""}`} style={{left:`${w.x}%`,top:`${w.y}%`}}>{w.word}</span>)}
+   <div className="typingDangerLine"><span>BREACH LINE</span></div>
+  </div>
+  <input ref={inputRef} className="typingInput" disabled={!running} value={typed} onChange={e=>change(e.target.value)} placeholder={running?"Type the falling word…":"Press Start"} autoComplete="off" autoCapitalize="none" spellCheck={false}/>
+  <p className="gameHint">Words fall faster and become longer as your score rises. Complete a word exactly to destroy it.</p>
+  {over&&<div className="mergeGameOverBackdrop"><div className="mergeGameOverModal"><span>ORVEN TYPING</span><h2>The line was breached!</h2><p>Your final score is <b>{score.toLocaleString()}</b>.</p><div><button className="mergeDone" onClick={onMenu}>Main Menu</button><button className="mergeAgain" onClick={reset}>Play Again</button></div></div></div>}
+ </div>
+}
+
+function OrvenDodge({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void}){
+ type Hazard={id:number;x:number;y:number;vx:number;vy:number;size:number;spin:number};
+ const [running,setRunning]=useState(false),[over,setOver]=useState(false),[score,setScore]=useState(0),[player,setPlayer]=useState({x:50,y:78}),[hazards,setHazards]=useState<Hazard[]>([]);
+ const playerRef=useRef({x:50,y:78}),hazRef=useRef<Hazard[]>([]),keys=useRef(new Set<string>()),raf=useRef<number|null>(null),last=useRef(0),spawn=useRef(0),scoreR=useRef(0),arena=useRef<HTMLDivElement|null>(null);
+ const level=(n:number)=>n<1000?1:n<3500?2:n<8000?3:n<16000?4:5;
+ function finish(){setRunning(false);setOver(true);if(raf.current)cancelAnimationFrame(raf.current);if(scoreR.current>0)onScore(Math.floor(scoreR.current))}
+ function reset(){if(raf.current)cancelAnimationFrame(raf.current);playerRef.current={x:50,y:78};hazRef.current=[];scoreR.current=0;setPlayer(playerRef.current);setHazards([]);setScore(0);setOver(false);setRunning(true);last.current=performance.now();spawn.current=0}
+ useEffect(()=>{
+  const down=(e:KeyboardEvent)=>{if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","w","a","s","d","W","A","S","D"].includes(e.key)){if(document.activeElement?.tagName!=="INPUT")e.preventDefault();keys.current.add(e.key.toLowerCase())}};
+  const up=(e:KeyboardEvent)=>keys.current.delete(e.key.toLowerCase());window.addEventListener("keydown",down);window.addEventListener("keyup",up);return()=>{window.removeEventListener("keydown",down);window.removeEventListener("keyup",up)}
+ },[]);
+ useEffect(()=>{
+  if(!running)return;
+  const tick=(now:number)=>{
+   const dt=Math.min(32,now-last.current);last.current=now;const lv=level(scoreR.current);
+   let {x,y}=playerRef.current;const step=(18+lv)*dt/1000;if(keys.current.has("a")||keys.current.has("arrowleft"))x-=step;if(keys.current.has("d")||keys.current.has("arrowright"))x+=step;if(keys.current.has("w")||keys.current.has("arrowup"))y-=step;if(keys.current.has("s")||keys.current.has("arrowdown"))y+=step;x=Math.max(3,Math.min(94,x));y=Math.max(4,Math.min(91,y));playerRef.current={x,y};setPlayer({x,y});
+   spawn.current+=dt;const interval=Math.max(145,720-lv*92);
+   let hs=hazRef.current.map(h=>({...h,x:h.x+h.vx*dt/1000,y:h.y+h.vy*dt/1000,spin:h.spin+dt*.18})).filter(h=>h.x>-12&&h.x<112&&h.y>-12&&h.y<112);
+   if(spawn.current>=interval){spawn.current=0;const side=Math.floor(Math.random()*3);const size=2.8+Math.random()*2.3;let h:Hazard;if(side===0)h={id:now+Math.random(),x:Math.random()*94,y:-7,vx:(Math.random()-.5)*7,vy:14+lv*3.2+Math.random()*5,size,spin:0};else if(side===1)h={id:now+Math.random(),x:-7,y:10+Math.random()*70,vx:14+lv*3,vy:(Math.random()-.2)*5,size,spin:0};else h={id:now+Math.random(),x:105,y:10+Math.random()*70,vx:-(14+lv*3),vy:(Math.random()-.2)*5,size,spin:0};hs.push(h)}
+   const hit=hs.some(h=>Math.hypot((h.x+1.8)-(x+1.8),(h.y+1.8)-(y+1.8))<(h.size*.48+2.1));
+   hazRef.current=hs;setHazards(hs);scoreR.current+=dt*(.075+lv*.012);setScore(Math.floor(scoreR.current));
+   if(hit){finish();return}raf.current=requestAnimationFrame(tick)
+  };last.current=performance.now();raf.current=requestAnimationFrame(tick);return()=>{if(raf.current)cancelAnimationFrame(raf.current)}
+ },[running]);
+ function pointMove(clientX:number,clientY:number){if(!running||!arena.current)return;const r=arena.current.getBoundingClientRect();playerRef.current={x:Math.max(3,Math.min(94,(clientX-r.left)/r.width*100)),y:Math.max(4,Math.min(91,(clientY-r.top)/r.height*100))}}
+ return <div className="playBox orvenDodgeGame">
+  <GameTitle title="Orven Dodge" score={score} reset={reset}/>
+  <div className="dodgeStats"><span>DIFFICULTY <b>LEVEL {level(score)}</b></span><span>HAZARDS <b>{hazards.length}</b></span></div>
+  <div ref={arena} className="dodgeArena" onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);pointMove(e.clientX,e.clientY)}} onPointerMove={e=>{if(e.buttons||e.pointerType==="touch")pointMove(e.clientX,e.clientY)}}>
+   {!running&&!over&&<div className="gameStartLayer"><b>DON'T GET HIT</b><p>Move with WASD / arrow keys, or drag on mobile. Survive as long as you can.</p><button onClick={reset}>Start Dodge</button></div>}
+   <div className="dodgePlayer" style={{left:`${player.x}%`,top:`${player.y}%`}}><i/></div>
+   {hazards.map(h=><div key={h.id} className="dodgeHazard" style={{left:`${h.x}%`,top:`${h.y}%`,width:`${h.size}%`,aspectRatio:"1",transform:`rotate(${h.spin}deg)`}}/>)}
+  </div>
+  <p className="gameHint">The storm gets faster and denser as your score climbs. Movement stays smooth on keyboard, mouse and touch.</p>
+  {over&&<div className="mergeGameOverBackdrop"><div className="mergeGameOverModal"><span>ORVEN DODGE</span><h2>You got hit!</h2><p>Your final score is <b>{score.toLocaleString()}</b>.</p><div><button className="mergeDone" onClick={onMenu}>Main Menu</button><button className="mergeAgain" onClick={reset}>Play Again</button></div></div></div>}
+ </div>
+}
