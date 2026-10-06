@@ -934,3 +934,35 @@ html{background:var(--bg);transition:background-color .25s ease}body{background:
   will-change:left,top;
 }
 @media (pointer:coarse){.orvenDodgeGame .dodgeArena{cursor:default}}
+
+/* ORVENSMP V10.17 — SOFT DAY MODE */
+[data-theme="light"]{
+ --bg:#d9d5ca;--panel:#e5e1d7;--panel2:#d2cec3;--surface:#dedad0;--surface2:#d0ccc1;
+ --text:#24272b;--muted:#656a70;--line:#bbb6aa;--lineSoft:#cac5ba;
+ --gold:#a77d18;--goldStrong:#8d6810;--shadow:0 14px 36px rgba(38,35,29,.10);
+ --headerGlass:rgba(218,214,204,.92);--input:#d6d2c8;--hover:#cbc7bc;--danger:#ad4c52;color-scheme:light
+}
+[data-theme="light"] body,[data-theme="light"] .publicCommunityHome,[data-theme="light"] .gamesPage,[data-theme="light"] .messagesPage,[data-theme="light"] .profilePage,[data-theme="light"] .resourcesPage{
+ background:radial-gradient(circle at 12% 0%,rgba(255,255,255,.18),transparent 34rem),linear-gradient(180deg,#ddd9cf 0%,#d6d2c8 100%)!important;color:var(--text)!important
+}
+[data-theme="light"] :is(.composerFocusCard,.authModal,.messagesShell,.conversationList,.messageThread,.gameCard,.playBox,.leaderboard,.gameTabs button,.resourceCard,.uploadCard,.notificationCard,.profilePost,.postMenu,.memoryTimer,.memoryCountdownNumber,.mergeBoard,.dragBlockBoard,.shapeTray,.shapeCard,.socialPost,.composerCard,.railCard,.profileHero,.profileContent,.profileEditForm,.accountSecurityCard,.appearanceCard,.emptyFeed,.notificationToolbar){
+ background:rgba(231,227,217,.92)!important;color:var(--text)!important;border-color:var(--line)!important;box-shadow:0 8px 24px rgba(42,38,31,.055)!important
+}
+[data-theme="light"] :is(.messageComposer textarea,.profileEditForm input,.profileEditForm textarea,.authForm input,.typingInput){
+ background:#d4d0c6!important;color:var(--text)!important;border-color:#b9b4a8!important
+}
+[data-theme="light"] :is(.gameTabs button:hover,.themeChoices>button:hover){background:#d6d2c7!important}
+[data-theme="light"] .dashboardTop{background:rgba(218,214,204,.90)!important;border-color:rgba(167,157,139,.72)!important;box-shadow:0 8px 28px rgba(44,40,33,.07)!important;backdrop-filter:blur(18px) saturate(.82)!important}
+[data-theme="light"] .supportHero,[data-theme="light"] .supportCard{background:#e4e0d6!important}
+[data-theme="light"] .supportTotals>div,[data-theme="light"] .gcashPaymentBox{background:#d9d4c8!important}
+[data-theme="light"] .donateCard input{background:#d3cfc5!important;color:#24272b!important}
+[data-theme="light"] .gcashSteps{background:#d7d3ca!important}
+[data-theme="light"] .supportPurpose{background:linear-gradient(145deg,#ddd7c8,#e5e1d8 48%,#d8d2c4)!important}
+[data-theme="light"] .supportPurposeItems>div{background:rgba(211,206,194,.84)!important}
+[data-theme="light"] .supportCinematicClosing,[data-theme="light"] .supportFlowModal{background:linear-gradient(145deg,#e3dfd5,#d5d1c7)!important;color:#24272b!important}
+[data-theme="light"] .composerFocusOverlay{background:rgba(48,45,39,.34)!important;backdrop-filter:blur(8px)!important}
+[data-theme="light"] ::selection{background:rgba(167,125,24,.24);color:#1f211f}
+[data-theme="light"] *{scrollbar-color:#aaa497 #d5d1c7}
+.lightPreview{background:#d9d5ca!important;border-color:#b9b4a8!important}.lightPreview i{background:#c7c2b7!important}.lightPreview i:nth-child(2){background:#a77d18!important}
+[data-theme="light"] :is(.socialPost p,.gameHint,.settings label,.resourceCard p,.profileContent p,.messagesShell p){color:#2d3034!important}
+[data-theme="light"] :is(.postMeta,.socialPost small,.leaderboard small,.resourceCard small,.settings small,.muted){color:#696e73!important}
