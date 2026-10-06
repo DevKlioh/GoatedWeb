@@ -298,12 +298,14 @@ function OrvenTyping({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void}
 }
 
 function OrvenDodge({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void}){
- type Hazard={id:number;x:number;y:number;vx:number;vy:number;size:number;spin:number};
+ type Hazard={id:number;x:number;y:number;vx:number;vy:number;size:number;spin:number;kind:string;glyph:string};
+ const MOBS=[["grass","▦"],["tnt","TNT"],["diamond","◆"],["creeper","☹"],["sword","⚔"],["pickaxe","⛏"],["apple","●"],["chest","▣"],["emerald","♦"],["ender","◈"],["torch","♜"],["obsidian","■"]];
  const [running,setRunning]=useState(false),[over,setOver]=useState(false),[score,setScore]=useState(0),[player,setPlayer]=useState({x:50,y:78}),[hazards,setHazards]=useState<Hazard[]>([]);
  const playerRef=useRef({x:50,y:78}),hazRef=useRef<Hazard[]>([]),keys=useRef(new Set<string>()),raf=useRef<number|null>(null),last=useRef(0),spawn=useRef(0),scoreR=useRef(0),arena=useRef<HTMLDivElement|null>(null);
+ const pointer=useRef<{active:boolean,id:number|null}>({active:false,id:null});
  const level=(n:number)=>n<1000?1:n<3500?2:n<8000?3:n<16000?4:5;
- function finish(){setRunning(false);setOver(true);if(raf.current)cancelAnimationFrame(raf.current);if(scoreR.current>0)onScore(Math.floor(scoreR.current))}
- function reset(){if(raf.current)cancelAnimationFrame(raf.current);playerRef.current={x:50,y:78};hazRef.current=[];scoreR.current=0;setPlayer(playerRef.current);setHazards([]);setScore(0);setOver(false);setRunning(true);last.current=performance.now();spawn.current=0}
+ function finish(){setRunning(false);setOver(true);pointer.current={active:false,id:null};if(raf.current)cancelAnimationFrame(raf.current);if(scoreR.current>0)onScore(Math.floor(scoreR.current))}
+ function reset(){if(raf.current)cancelAnimationFrame(raf.current);playerRef.current={x:50,y:78};hazRef.current=[];scoreR.current=0;pointer.current={active:false,id:null};setPlayer(playerRef.current);setHazards([]);setScore(0);setOver(false);setRunning(true);last.current=performance.now();spawn.current=0}
  useEffect(()=>{
   const down=(e:KeyboardEvent)=>{if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","w","a","s","d","W","A","S","D"].includes(e.key)){if(document.activeElement?.tagName!=="INPUT")e.preventDefault();keys.current.add(e.key.toLowerCase())}};
   const up=(e:KeyboardEvent)=>keys.current.delete(e.key.toLowerCase());window.addEventListener("keydown",down);window.addEventListener("keyup",up);return()=>{window.removeEventListener("keydown",down);window.removeEventListener("keyup",up)}
@@ -312,25 +314,45 @@ function OrvenDodge({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void})
   if(!running)return;
   const tick=(now:number)=>{
    const dt=Math.min(32,now-last.current);last.current=now;const lv=level(scoreR.current);
-   let {x,y}=playerRef.current;const step=(18+lv)*dt/1000;if(keys.current.has("a")||keys.current.has("arrowleft"))x-=step;if(keys.current.has("d")||keys.current.has("arrowright"))x+=step;if(keys.current.has("w")||keys.current.has("arrowup"))y-=step;if(keys.current.has("s")||keys.current.has("arrowdown"))y+=step;x=Math.max(3,Math.min(94,x));y=Math.max(4,Math.min(91,y));playerRef.current={x,y};setPlayer({x,y});
+   let {x,y}=playerRef.current;
+   // Keyboard gives true free 2D movement; diagonals are normalized so they are not faster.
+   let dx=0,dy=0;if(keys.current.has("a")||keys.current.has("arrowleft"))dx--;if(keys.current.has("d")||keys.current.has("arrowright"))dx++;if(keys.current.has("w")||keys.current.has("arrowup"))dy--;if(keys.current.has("s")||keys.current.has("arrowdown"))dy++;
+   if(dx||dy){const mag=Math.hypot(dx,dy);const step=(24+lv*1.25)*dt/1000;x+=dx/mag*step;y+=dy/mag*step}
+   x=Math.max(2.2,Math.min(97.8,x));y=Math.max(2.8,Math.min(97.2,y));playerRef.current={x,y};setPlayer({x,y});
    spawn.current+=dt;const interval=Math.max(145,720-lv*92);
-   let hs=hazRef.current.map(h=>({...h,x:h.x+h.vx*dt/1000,y:h.y+h.vy*dt/1000,spin:h.spin+dt*.18})).filter(h=>h.x>-12&&h.x<112&&h.y>-12&&h.y<112);
-   if(spawn.current>=interval){spawn.current=0;const side=Math.floor(Math.random()*3);const size=2.8+Math.random()*2.3;let h:Hazard;if(side===0)h={id:now+Math.random(),x:Math.random()*94,y:-7,vx:(Math.random()-.5)*7,vy:14+lv*3.2+Math.random()*5,size,spin:0};else if(side===1)h={id:now+Math.random(),x:-7,y:10+Math.random()*70,vx:14+lv*3,vy:(Math.random()-.2)*5,size,spin:0};else h={id:now+Math.random(),x:105,y:10+Math.random()*70,vx:-(14+lv*3),vy:(Math.random()-.2)*5,size,spin:0};hs.push(h)}
-   const hit=hs.some(h=>Math.hypot((h.x+1.8)-(x+1.8),(h.y+1.8)-(y+1.8))<(h.size*.48+2.1));
+   let hs=hazRef.current.map(h=>({...h,x:h.x+h.vx*dt/1000,y:h.y+h.vy*dt/1000,spin:h.spin+dt*.13})).filter(h=>h.x>-12&&h.x<112&&h.y>-12&&h.y<112);
+   if(spawn.current>=interval){
+    spawn.current=0;const side=Math.floor(Math.random()*4),size=3.2+Math.random()*2.5,speed=14+lv*3.15+Math.random()*5;const [kind,glyph]=MOBS[Math.floor(Math.random()*MOBS.length)];
+    let x0=0,y0=0,vx=0,vy=0;
+    if(side===0){x0=Math.random()*96;y0=-7;vx=(Math.random()-.5)*8;vy=speed}
+    else if(side===1){x0=-7;y0=Math.random()*96;vx=speed;vy=(Math.random()-.5)*8}
+    else if(side===2){x0=107;y0=Math.random()*96;vx=-speed;vy=(Math.random()-.5)*8}
+    else{x0=Math.random()*96;y0=107;vx=(Math.random()-.5)*8;vy=-speed}
+    hs.push({id:now+Math.random(),x:x0,y:y0,vx,vy,size,spin:Math.random()*180,kind,glyph});
+   }
+   const hit=hs.some(h=>Math.hypot(h.x-x,h.y-y)<(h.size*.43+1.65));
    hazRef.current=hs;setHazards(hs);scoreR.current+=dt*(.075+lv*.012);setScore(Math.floor(scoreR.current));
    if(hit){finish();return}raf.current=requestAnimationFrame(tick)
   };last.current=performance.now();raf.current=requestAnimationFrame(tick);return()=>{if(raf.current)cancelAnimationFrame(raf.current)}
  },[running]);
- function pointMove(clientX:number,clientY:number){if(!running||!arena.current)return;const r=arena.current.getBoundingClientRect();playerRef.current={x:Math.max(3,Math.min(94,(clientX-r.left)/r.width*100)),y:Math.max(4,Math.min(91,(clientY-r.top)/r.height*100))}}
+ function pointMove(clientX:number,clientY:number){
+  if(!running||!arena.current)return;const r=arena.current.getBoundingClientRect();
+  playerRef.current={x:Math.max(2.2,Math.min(97.8,(clientX-r.left)/r.width*100)),y:Math.max(2.8,Math.min(97.2,(clientY-r.top)/r.height*100))};
+  setPlayer({...playerRef.current});
+ }
  return <div className="playBox orvenDodgeGame">
   <GameTitle title="Orven Dodge" score={score} reset={reset}/>
   <div className="dodgeStats"><span>DIFFICULTY <b>LEVEL {level(score)}</b></span><span>HAZARDS <b>{hazards.length}</b></span></div>
-  <div ref={arena} className="dodgeArena" onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);pointMove(e.clientX,e.clientY)}} onPointerMove={e=>{if(e.buttons||e.pointerType==="touch")pointMove(e.clientX,e.clientY)}}>
-   {!running&&!over&&<div className="gameStartLayer"><b>DON'T GET HIT</b><p>Move with WASD / arrow keys, or drag on mobile. Survive as long as you can.</p><button onClick={reset}>Start Dodge</button></div>}
+  <div ref={arena} className="dodgeArena"
+   onPointerDown={e=>{if(!running)return;pointer.current={active:true,id:e.pointerId};e.currentTarget.setPointerCapture(e.pointerId);pointMove(e.clientX,e.clientY)}}
+   onPointerMove={e=>{if(running&&pointer.current.active&&pointer.current.id===e.pointerId)pointMove(e.clientX,e.clientY)}}
+   onPointerUp={e=>{if(pointer.current.id===e.pointerId)pointer.current={active:false,id:null}}}
+   onPointerCancel={e=>{if(pointer.current.id===e.pointerId)pointer.current={active:false,id:null}}}>
+   {!running&&!over&&<div className="gameStartLayer"><b>DON'T GET HIT</b><p>Move freely anywhere in the arena. WASD / arrows on desktop, or touch and drag anywhere on mobile.</p><button onClick={reset}>Start Dodge</button></div>}
    <div className="dodgePlayer" style={{left:`${player.x}%`,top:`${player.y}%`}}><i/></div>
-   {hazards.map(h=><div key={h.id} className="dodgeHazard" style={{left:`${h.x}%`,top:`${h.y}%`,width:`${h.size}%`,aspectRatio:"1",transform:`rotate(${h.spin}deg)`}}/>)}
+   {hazards.map(h=><div key={h.id} className={`mcHazard mc-${h.kind}`} style={{left:`${h.x}%`,top:`${h.y}%`,width:`${h.size}%`,aspectRatio:"1",transform:`translate(-50%,-50%) rotate(${h.spin}deg)`}}><span>{h.glyph}</span></div>)}
   </div>
-  <p className="gameHint">The storm gets faster and denser as your score climbs. Movement stays smooth on keyboard, mouse and touch.</p>
+  <p className="gameHint">Use the entire arena. Minecraft-inspired blocks and items now attack from all four sides, getting faster and denser as your score climbs.</p>
   {over&&<div className="mergeGameOverBackdrop"><div className="mergeGameOverModal"><span>ORVEN DODGE</span><h2>You got hit!</h2><p>Your final score is <b>{score.toLocaleString()}</b>.</p><div><button className="mergeDone" onClick={onMenu}>Main Menu</button><button className="mergeAgain" onClick={reset}>Play Again</button></div></div></div>}
  </div>
 }
