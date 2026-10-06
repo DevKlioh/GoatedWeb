@@ -13,6 +13,7 @@ export default function LiveSearch({variant="dashboard"}:{variant?:"dashboard"|"
   const wrap=useRef<HTMLDivElement>(null), input=useRef<HTMLInputElement>(null);
   const [query,setQuery]=useState(""),[people,setPeople]=useState<Person[]>([]),[resources,setResources]=useState<Resource[]>([]);
   const [open,setOpen]=useState(false),[loading,setLoading]=useState(false),[active,setActive]=useState(-1);
+  const [profileRevision,setProfileRevision]=useState(0);
   const results:Result[]=[
     ...people.map(p=>({kind:"person" as const,key:`p-${p.id}`,href:`/profile/${p.id}`,title:p.display_name||p.username||"OrvenSMP User",subtitle:p.username?`@${p.username}`:"Registered OrvenSMP member",image:p.avatar_url})),
     ...resources.map(r=>({kind:"resource" as const,key:`r-${r.id}`,href:`/resources/${r.slug}`,title:r.name,subtitle:`${r.pricing_type==="premium"?"Premium":"Free"}${r.plugin_version?` • v${r.plugin_version}`:""} • ↓ ${Number(r.download_count||0).toLocaleString()}`,image:r.icon_url}))
@@ -27,6 +28,13 @@ export default function LiveSearch({variant="dashboard"}:{variant?:"dashboard"|"
     document.addEventListener("keydown",key);document.addEventListener("mousedown",outside);
     return()=>{document.removeEventListener("keydown",key);document.removeEventListener("mousedown",outside)};
   },[]);
+
+  useEffect(()=>{
+    const channel=supabase.channel("orven-global-profile-search")
+      .on("postgres_changes",{event:"*",schema:"public",table:"profiles"},()=>setProfileRevision(v=>v+1))
+      .subscribe();
+    return()=>{void supabase.removeChannel(channel)};
+  },[supabase]);
 
   useEffect(()=>{
     const q=query.trim();setActive(-1);
@@ -46,7 +54,7 @@ export default function LiveSearch({variant="dashboard"}:{variant?:"dashboard"|"
       setPeople([...merged.values()].slice(0,6));setResources((pluginRes.data||[]) as Resource[]);setLoading(false);setOpen(true);
     },220);
     return()=>{cancelled=true;clearTimeout(timer)};
-  },[query,supabase]);
+  },[query,supabase,profileRevision]);
 
   function keyboard(e:React.KeyboardEvent<HTMLInputElement>){
     if(!open||!results.length)return;
