@@ -78,6 +78,18 @@ begin
       set credits=credits+d.amount
       where id=d.user_id;
 
+    -- Persistent real-time confirmation for the member. The existing notification
+    -- badge/page listens to INSERTs on public.notifications.
+    insert into public.notifications(user_id,type,title,body,target_url,is_read)
+    values(
+      d.user_id,
+      'credits',
+      'Orven Credits added',
+      format('Your GCash payment was verified. ₱%s Orven Credits have been added to your account.', d.amount),
+      '/support',
+      false
+    );
+
     -- The user requested completed payment conversations to be cleared.
     -- Deleting the ticket cascades all messages in that completed conversation.
     if v_ticket is not null then
