@@ -124,7 +124,7 @@ export default function AuthButton({ user }: Props) {
         <a href="/resources"><span>⬡</span><div><b>Your Resources</b><small>Plugins and resources you own</small></div></a>
         <a href="/marked"><span>◆</span><div><b>Marked Posts</b><small>Posts you saved for later</small></div></a>
         <a href="/notifications"><span>●</span><div><b>Notifications</b><small>Mentions, replies, likes and messages</small></div></a>
-        <a href="/messages"><span>✉</span><div><b>Messages</b><small>Your private conversations</small></div></a>
+        <a href="/messages"><span>✉</span><div><b>Messages</b><small>Your private conversations</small></div></a>{user.role==="admin"&&<a href="/admin/tickets"><span>▣</span><div><b>Tickets</b><small>Review and manage support tickets</small></div></a>}
       </div>
       <div className="accountMenuFooter">
         <a className="uploadQuickLink" href="/resources/upload">＋ Upload Resource</a>

@@ -18,6 +18,7 @@ export default function OrvenSupportClient({userId,isAdmin}:{userId:string;isAdm
  const [tickets,setTickets]=useState<Ticket[]>([]),[active,setActive]=useState<string|null>(null);
  const [messages,setMessages]=useState<Msg[]>([]),[pending,setPending]=useState<PendingDonation[]>([]);
  const [text,setText]=useState(""),[notice,setNotice]=useState(""),[reviewing,setReviewing]=useState<string|null>(null);
+ const [rejecting,setRejecting]=useState<PendingDonation|null>(null),[rejectReason,setRejectReason]=useState("");
 
  async function loadTickets(){
    const {data,error}=await supabase.from("orven_support_tickets").select("*").order("updated_at",{ascending:false});
@@ -79,13 +80,18 @@ export default function OrvenSupportClient({userId,isAdmin}:{userId:string;isAdm
  }
  async function rejectPayment(d:PendingDonation){
    if(!active||reviewing)return;
-   if(!window.confirm(`Reject this GCash payment request of ₱${Number(d.amount).toLocaleString()}?\n\nNo Orven Credits will be added. The member will receive a rejection notice in this Credits Support conversation.`))return;
+   setRejecting(d);setRejectReason("");setNotice("");
+ }
+ async function confirmReject(){
+   const d=rejecting;if(!d||!active||reviewing)return;
+   const reason=rejectReason.trim();
+   if(reason.length<3)return setNotice("Please enter a rejection reason for the member.");
    setReviewing(d.id);setNotice("");
-   const {error}=await supabase.rpc("orven_review_gcash_support",{p_donation:d.id,p_approve:false});
+   const {error}=await supabase.rpc("orven_reject_gcash_support",{p_donation:d.id,p_reason:reason});
    setReviewing(null);
    if(error)return setNotice(error.message);
-   await loadPending();await loadMessages();
-   setNotice("Payment rejected. No Orven Credits were issued.");
+   setRejecting(null);setRejectReason("");await loadPending();await loadMessages();
+   setNotice("Payment rejected. The member received your reason and no Orven Credits were issued.");
  }
  async function deletePayment(d:PendingDonation){
    if(!active||reviewing)return;
@@ -98,6 +104,16 @@ export default function OrvenSupportClient({userId,isAdmin}:{userId:string;isAdm
    setNotice("Invalid payment request deleted. No Orven Credits were issued.");
  }
 
+ async function closeTicket(){
+   if(!active||reviewing)return;
+   const ticket=tickets.find(t=>t.id===active);if(!ticket)return;
+   if(!window.confirm("Close this ticket permanently?\n\nThe conversation, receipt/payment request and transaction details linked to this ticket will be permanently deleted. Only the permanent ledger record (date + credited/donated amount, if applicable) will remain."))return;
+   setReviewing(active);setNotice("");
+   const {error}=await supabase.rpc("orven_close_support_ticket",{p_ticket:active});
+   setReviewing(null);
+   if(error)return setNotice(error.message);
+   setActive(null);setMessages([]);setPending([]);await loadTickets();setNotice("Ticket closed and private transaction/support data permanently cleared.");
+ }
  const ticket=tickets.find(t=>t.id===active);
  return <div className="orvenSupportShell">
   <aside className="supportInbox">
@@ -107,7 +123,7 @@ export default function OrvenSupportClient({userId,isAdmin}:{userId:string;isAdm
   </aside>
 
   <section className="supportConversation">{ticket?<>
-   <header><div><span className="supportAvatar">◇</span><div><b>Orven Support</b><small>{label(ticket.category)} · {ticket.status}</small></div></div></header>
+   <header><div><span className="supportAvatar">◇</span><div><b>Orven Support</b><small>{label(ticket.category)} · {ticket.status}</small></div></div>{isAdmin&&<button type="button" className="closeSupportTicketButton" disabled={!!reviewing} onClick={closeTicket}>Close Ticket</button>}</header>
 
    {isAdmin&&ticket.category==="credits_support"&&pending.length>0&&<div className="paymentReviewStack">
     {pending.map(d=><div className="paymentReviewCard" key={d.id}>
@@ -120,5 +136,6 @@ export default function OrvenSupportClient({userId,isAdmin}:{userId:string;isAdm
    {ticket.status==="open"&&<form onSubmit={send}><textarea value={text} onChange={e=>setText(e.target.value)} maxLength={4000} placeholder={isAdmin?"Reply as Orven Support…":"Message Orven Support…"}/><button>Send</button></form>}
   </>:<div className="supportEmpty"><span>◇</span><h2>Orven Support</h2><p>{isAdmin?"Select a support ticket to reply as Orven Support.":"Choose what you need help with to create a support ticket."}</p></div>}
   {notice&&<div className="supportNotice">{notice}</div>}</section>
+  {isAdmin&&rejecting&&<div className="ticketAdminModalBackdrop" role="dialog" aria-modal="true"><div className="ticketAdminModal"><span>ADMIN PAYMENT REVIEW</span><h3>Reject ₱{Number(rejecting.amount).toLocaleString()} payment?</h3><p>Tell the member why this payment could not be verified. This reason will be sent by <b>Orven Support</b> and only admins can see this review control.</p><textarea autoFocus maxLength={500} value={rejectReason} onChange={e=>setRejectReason(e.target.value)} placeholder="Example: The reference number does not match the uploaded receipt."/><div><button type="button" className="receiptButton" disabled={!!reviewing} onClick={()=>{setRejecting(null);setRejectReason("")}}>Cancel</button><button type="button" className="rejectPaymentButton" disabled={!!reviewing||rejectReason.trim().length<3} onClick={confirmReject}>{reviewing?"Rejecting…":"Reject & send reason"}</button></div></div></div>}
  </div>;
 }
