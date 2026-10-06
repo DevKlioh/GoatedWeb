@@ -128,7 +128,7 @@ function BlockPuzzle({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void}
   {name:"Step 6",cells:[[0,0],[0,1],[1,1],[1,2],[2,2],[2,3]]},
   {name:"Corner 7",cells:[[0,0],[0,1],[0,2],[0,3],[1,3],[2,3],[3,3]]}
  ];
- const difficultyFor=(n:number)=>n<1500?1:n<4000?2:n<8000?3:n<14000?4:5;
+ const difficultyFor=(n:number)=>n<=5000?1:n<=14999?2:n<=29999?3:n<=49999?4:5;
  const randomShape=(n=0)=>{
    const level=difficultyFor(n);
    // At high scores, small rescue pieces become deliberately uncommon.
