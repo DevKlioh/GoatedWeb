@@ -905,3 +905,21 @@ html{background:var(--bg);transition:background-color .25s ease}body{background:
 .mc-ender{background:#332849}.mc-ender span{color:#ad72d3}.mc-torch{background:linear-gradient(#e3a63b 0 35%,#735034 36%)}
 .mc-obsidian{background:#292238}.mc-obsidian span{color:#77668f}
 @media(max-width:650px){.mcHazard span{font-size:7px}.dodgePlayer{transition:left .018s linear,top .018s linear}}
+
+/* Orven Dodge V10.15 — true unrestricted analog movement */
+.orvenDodgeGame .dodgeArena{
+  background:
+    radial-gradient(circle at 50% 45%,rgba(219,176,79,.065),transparent 48%),
+    linear-gradient(180deg,#111315,#090b0d);
+}
+/* Remove the visual grid completely: movement is NOT lane/grid based. */
+.orvenDodgeGame .dodgeArena:before{display:none!important}
+/* Player follows the exact continuously calculated coordinate, with no CSS
+   interpolation/lag that can make it appear to snap to invisible lines. */
+.orvenDodgeGame .dodgePlayer{
+  transition:none!important;
+  will-change:left,top;
+  pointer-events:none;
+}
+/* Keep the whole arena as one continuous movement surface. */
+.orvenDodgeGame .dodgeArena{touch-action:none!important}
