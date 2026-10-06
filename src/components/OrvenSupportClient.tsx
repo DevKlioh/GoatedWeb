@@ -77,6 +77,26 @@ export default function OrvenSupportClient({userId,isAdmin}:{userId:string;isAdm
    await loadTickets();
    setNotice(`Payment verified. ₱${Number(d.amount).toLocaleString()} Orven Credits were issued and the completed support conversation was cleared.`);
  }
+ async function rejectPayment(d:PendingDonation){
+   if(!active||reviewing)return;
+   if(!window.confirm(`Reject this GCash payment request of ₱${Number(d.amount).toLocaleString()}?\n\nNo Orven Credits will be added. The member will receive a rejection notice in this Credits Support conversation.`))return;
+   setReviewing(d.id);setNotice("");
+   const {error}=await supabase.rpc("orven_review_gcash_support",{p_donation:d.id,p_approve:false});
+   setReviewing(null);
+   if(error)return setNotice(error.message);
+   await loadPending();await loadMessages();
+   setNotice("Payment rejected. No Orven Credits were issued.");
+ }
+ async function deletePayment(d:PendingDonation){
+   if(!active||reviewing)return;
+   if(!window.confirm(`Permanently delete this invalid GCash payment request of ₱${Number(d.amount).toLocaleString()}?\n\nThis removes the payment request and its linked support ticket/conversation. This cannot be undone.`))return;
+   setReviewing(d.id);setNotice("");
+   const {error}=await supabase.rpc("orven_delete_gcash_support",{p_donation:d.id});
+   setReviewing(null);
+   if(error)return setNotice(error.message);
+   setPending([]);setMessages([]);setActive(null);await loadTickets();
+   setNotice("Invalid payment request deleted. No Orven Credits were issued.");
+ }
 
  const ticket=tickets.find(t=>t.id===active);
  return <div className="orvenSupportShell">
@@ -92,7 +112,7 @@ export default function OrvenSupportClient({userId,isAdmin}:{userId:string;isAdm
    {isAdmin&&ticket.category==="credits_support"&&pending.length>0&&<div className="paymentReviewStack">
     {pending.map(d=><div className="paymentReviewCard" key={d.id}>
       <div><span>GCASH PAYMENT VERIFICATION</span><strong>₱{Number(d.amount).toLocaleString()}</strong><small>Reference: {d.reference||"N/A"} · Submitted {new Date(d.created_at).toLocaleString()}</small></div>
-      <div className="paymentReviewActions"><button type="button" className="receiptButton" onClick={()=>viewReceipt(d.proof_path)}>View receipt</button><button type="button" className="verifyPaymentButton" disabled={reviewing===d.id} onClick={()=>approvePayment(d)}>{reviewing===d.id?"Verifying…":"✓ Verify & approve payment"}</button></div>
+      <div className="paymentReviewActions"><button type="button" className="receiptButton" onClick={()=>viewReceipt(d.proof_path)}>View receipt</button><button type="button" className="rejectPaymentButton" disabled={!!reviewing} onClick={()=>rejectPayment(d)}>Reject</button><button type="button" className="deletePaymentButton" disabled={!!reviewing} onClick={()=>deletePayment(d)}>Delete invalid</button><button type="button" className="verifyPaymentButton" disabled={!!reviewing} onClick={()=>approvePayment(d)}>{reviewing===d.id?"Processing…":"✓ Verify & approve"}</button></div>
     </div>)}
    </div>}
 
