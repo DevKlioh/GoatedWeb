@@ -12,9 +12,11 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: viewed } = await supabase.from("profiles")
-    .select("id,username,display_name,bio,avatar_url,created_at,last_seen_at")
-    .ilike("username", username).maybeSingle();
+  const profileSelect = "id,username,display_name,bio,avatar_url,created_at,last_seen_at";
+  const isProfileId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(username);
+  const { data: viewed } = isProfileId
+    ? await supabase.from("profiles").select(profileSelect).eq("id", username).maybeSingle()
+    : await supabase.from("profiles").select(profileSelect).ilike("username", decodeURIComponent(username)).maybeSingle();
   if (!viewed) notFound();
 
   let me: any = null;

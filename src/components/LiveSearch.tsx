@@ -14,7 +14,7 @@ export default function LiveSearch({variant="dashboard"}:{variant?:"dashboard"|"
   const [query,setQuery]=useState(""),[people,setPeople]=useState<Person[]>([]),[resources,setResources]=useState<Resource[]>([]);
   const [open,setOpen]=useState(false),[loading,setLoading]=useState(false),[active,setActive]=useState(-1);
   const results:Result[]=[
-    ...people.map(p=>({kind:"person" as const,key:`p-${p.id}`,href:`/profile/${encodeURIComponent(p.username||"player")}`,title:p.display_name||p.username||"OrvenSMP User",subtitle:`@${p.username||"player"}`,image:p.avatar_url})),
+    ...people.map(p=>({kind:"person" as const,key:`p-${p.id}`,href:`/profile/${p.id}`,title:p.display_name||p.username||"OrvenSMP User",subtitle:p.username?`@${p.username}`:"Registered OrvenSMP member",image:p.avatar_url})),
     ...resources.map(r=>({kind:"resource" as const,key:`r-${r.id}`,href:`/resources/${r.slug}`,title:r.name,subtitle:`${r.pricing_type==="premium"?"Premium":"Free"}${r.plugin_version?` • v${r.plugin_version}`:""} • ↓ ${Number(r.download_count||0).toLocaleString()}`,image:r.icon_url}))
   ];
 
@@ -62,8 +62,8 @@ export default function LiveSearch({variant="dashboard"}:{variant?:"dashboard"|"
     {open&&query.trim().length>0&&<div className="liveSearchDropdown">
       {query.trim().length<2?<div className="searchHint">Type at least 2 characters to search.</div>:loading?<div className="searchLoading"><i/> Searching OrvenSMP…</div>:results.length===0?<div className="searchEmpty"><b>No matches found</b><span>No users or plugins match “{query.trim()}”.</span></div>:<>
         {people.length>0&&<div className="searchGroup"><div className="searchGroupTitle">People</div>{people.map((p,i)=>{
-          const idx=i;return <Link onMouseEnter={()=>setActive(idx)} className={`searchResult ${active===idx?"active":""}`} onClick={()=>setOpen(false)} href={`/profile/${encodeURIComponent(p.username||"player")}`} key={p.id}>
-            <span className="searchResultImage">{p.avatar_url?<img src={p.avatar_url} alt=""/>:(p.display_name||p.username||"G").slice(0,1).toUpperCase()}</span><span><b>{p.display_name||p.username||"OrvenSMP User"}</b><small>@{p.username||"player"}</small></span><em>Profile →</em>
+          const idx=i;return <Link onMouseEnter={()=>setActive(idx)} className={`searchResult ${active===idx?"active":""}`} onClick={()=>setOpen(false)} href={`/profile/${p.id}`} key={p.id}>
+            <span className="searchResultImage">{p.avatar_url?<img src={p.avatar_url} alt=""/>:(p.display_name||p.username||"G").slice(0,1).toUpperCase()}</span><span><b>{p.display_name||p.username||"OrvenSMP User"}</b><small>{p.username?`@${p.username}`:"Registered OrvenSMP member"}</small></span><em>Profile →</em>
           </Link>})}</div>}
         {resources.length>0&&<div className="searchGroup"><div className="searchGroupTitle">Plugins</div>{resources.map((r,i)=>{
           const idx=people.length+i;return <Link onMouseEnter={()=>setActive(idx)} className={`searchResult ${active===idx?"active":""}`} onClick={()=>setOpen(false)} href={`/resources/${r.slug}`} key={r.id}>
