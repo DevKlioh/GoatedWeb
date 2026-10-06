@@ -923,3 +923,14 @@ html{background:var(--bg);transition:background-color .25s ease}body{background:
 }
 /* Keep the whole arena as one continuous movement surface. */
 .orvenDodgeGame .dodgeArena{touch-action:none!important}
+
+/* Orven Dodge V10.16 — ultra-smooth cursor follower */
+.orvenDodgeGame .dodgeArena{cursor:none}
+.orvenDodgeGame .dodgePlayer{
+  transition:none!important;
+  transform:translate3d(-50%,-50%,0);
+  backface-visibility:hidden;
+  contain:layout paint;
+  will-change:left,top;
+}
+@media (pointer:coarse){.orvenDodgeGame .dodgeArena{cursor:default}}

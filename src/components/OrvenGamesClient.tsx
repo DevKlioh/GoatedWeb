@@ -302,11 +302,11 @@ function OrvenDodge({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void})
  const MOBS=[["grass","▦"],["tnt","TNT"],["diamond","◆"],["creeper","☹"],["sword","⚔"],["pickaxe","⛏"],["apple","●"],["chest","▣"],["emerald","♦"],["ender","◈"],["torch","♜"],["obsidian","■"]];
  const [running,setRunning]=useState(false),[over,setOver]=useState(false),[score,setScore]=useState(0),[hazards,setHazards]=useState<Hazard[]>([]);
  const playerRef=useRef({x:50,y:78}),playerEl=useRef<HTMLDivElement|null>(null),hazRef=useRef<Hazard[]>([]),keys=useRef(new Set<string>()),raf=useRef<number|null>(null),last=useRef(0),spawn=useRef(0),scoreR=useRef(0),arena=useRef<HTMLDivElement|null>(null);
- const pointer=useRef<{active:boolean,id:number|null}>({active:false,id:null});
+ const pointer=useRef<{active:boolean;id:number|null}>({active:false,id:null}),targetRef=useRef<{x:number;y:number;active:boolean}>({x:50,y:78,active:false});
  const level=(n:number)=>n<1000?1:n<3500?2:n<8000?3:n<16000?4:5;
- function finish(){setRunning(false);setOver(true);pointer.current={active:false,id:null};if(raf.current)cancelAnimationFrame(raf.current);if(scoreR.current>0)onScore(Math.floor(scoreR.current))}
+ function finish(){setRunning(false);setOver(true);pointer.current={active:false,id:null};targetRef.current.active=false;if(raf.current)cancelAnimationFrame(raf.current);if(scoreR.current>0)onScore(Math.floor(scoreR.current))}
  function paintPlayer(){const el=playerEl.current;if(!el)return;el.style.left=`${playerRef.current.x}%`;el.style.top=`${playerRef.current.y}%`}
- function reset(){if(raf.current)cancelAnimationFrame(raf.current);playerRef.current={x:50,y:78};hazRef.current=[];scoreR.current=0;pointer.current={active:false,id:null};paintPlayer();setHazards([]);setScore(0);setOver(false);setRunning(true);last.current=performance.now();spawn.current=0}
+ function reset(){if(raf.current)cancelAnimationFrame(raf.current);playerRef.current={x:50,y:78};targetRef.current={x:50,y:78,active:false};hazRef.current=[];scoreR.current=0;pointer.current={active:false,id:null};paintPlayer();setHazards([]);setScore(0);setOver(false);setRunning(true);last.current=performance.now();spawn.current=0}
  useEffect(()=>{
   const down=(e:KeyboardEvent)=>{if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","w","a","s","d","W","A","S","D"].includes(e.key)){if(document.activeElement?.tagName!=="INPUT")e.preventDefault();keys.current.add(e.key.toLowerCase())}};
   const up=(e:KeyboardEvent)=>keys.current.delete(e.key.toLowerCase());window.addEventListener("keydown",down);window.addEventListener("keyup",up);return()=>{window.removeEventListener("keydown",down);window.removeEventListener("keyup",up)}
@@ -316,9 +316,17 @@ function OrvenDodge({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void})
   const tick=(now:number)=>{
    const dt=Math.min(32,now-last.current);last.current=now;const lv=level(scoreR.current);
    let {x,y}=playerRef.current;
-   // Keyboard gives true free 2D movement; diagonals are normalized so they are not faster.
+   // Cursor/touch target has priority and is followed every animation frame.
+   // Exponential smoothing is frame-rate independent: responsive without sticky lag.
+   if(targetRef.current.active){
+    const follow=1-Math.exp(-32*dt/1000);
+    x+=(targetRef.current.x-x)*follow;y+=(targetRef.current.y-y)*follow;
+    if(Math.abs(targetRef.current.x-x)<.035)x=targetRef.current.x;
+    if(Math.abs(targetRef.current.y-y)<.035)y=targetRef.current.y;
+   }
+   // Keyboard remains fully analog in 8 directions and cancels cursor-follow when used.
    let dx=0,dy=0;if(keys.current.has("a")||keys.current.has("arrowleft"))dx--;if(keys.current.has("d")||keys.current.has("arrowright"))dx++;if(keys.current.has("w")||keys.current.has("arrowup"))dy--;if(keys.current.has("s")||keys.current.has("arrowdown"))dy++;
-   if(dx||dy){const mag=Math.hypot(dx,dy);const step=(24+lv*1.25)*dt/1000;x+=dx/mag*step;y+=dy/mag*step}
+   if(dx||dy){targetRef.current.active=false;const mag=Math.hypot(dx,dy);const step=(27+lv*1.35)*dt/1000;x+=dx/mag*step;y+=dy/mag*step}
    x=Math.max(2.2,Math.min(97.8,x));y=Math.max(2.8,Math.min(97.2,y));playerRef.current={x,y};paintPlayer();
    spawn.current+=dt;const interval=Math.max(145,720-lv*92);
    let hs=hazRef.current.map(h=>({...h,x:h.x+h.vx*dt/1000,y:h.y+h.vy*dt/1000,spin:h.spin+dt*.13})).filter(h=>h.x>-12&&h.x<112&&h.y>-12&&h.y<112);
@@ -336,24 +344,25 @@ function OrvenDodge({onScore,onMenu}:{onScore:(n:number)=>void;onMenu:()=>void})
    if(hit){finish();return}raf.current=requestAnimationFrame(tick)
   };last.current=performance.now();raf.current=requestAnimationFrame(tick);return()=>{if(raf.current)cancelAnimationFrame(raf.current)}
  },[running]);
- function pointMove(clientX:number,clientY:number){
+ function setPointerTarget(clientX:number,clientY:number){
   if(!running||!arena.current)return;const r=arena.current.getBoundingClientRect();
-  playerRef.current={x:Math.max(2.2,Math.min(97.8,(clientX-r.left)/r.width*100)),y:Math.max(2.8,Math.min(97.2,(clientY-r.top)/r.height*100))};
-  paintPlayer();
+  targetRef.current={x:Math.max(2.2,Math.min(97.8,(clientX-r.left)/r.width*100)),y:Math.max(2.8,Math.min(97.2,(clientY-r.top)/r.height*100)),active:true};
  }
  return <div className="playBox orvenDodgeGame">
   <GameTitle title="Orven Dodge" score={score} reset={reset}/>
   <div className="dodgeStats"><span>DIFFICULTY <b>LEVEL {level(score)}</b></span><span>HAZARDS <b>{hazards.length}</b></span></div>
   <div ref={arena} className="dodgeArena"
-   onPointerDown={e=>{if(!running)return;pointer.current={active:true,id:e.pointerId};e.currentTarget.setPointerCapture(e.pointerId);pointMove(e.clientX,e.clientY)}}
-   onPointerMove={e=>{if(running&&pointer.current.active&&pointer.current.id===e.pointerId)pointMove(e.clientX,e.clientY)}}
-   onPointerUp={e=>{if(pointer.current.id===e.pointerId)pointer.current={active:false,id:null}}}
-   onPointerCancel={e=>{if(pointer.current.id===e.pointerId)pointer.current={active:false,id:null}}}>
-   {!running&&!over&&<div className="gameStartLayer"><b>DON'T GET HIT</b><p>Move freely anywhere in the arena. WASD / arrows on desktop, or touch and drag anywhere on mobile.</p><button onClick={reset}>Start Dodge</button></div>}
+   onPointerEnter={e=>{if(running&&e.pointerType==="mouse")setPointerTarget(e.clientX,e.clientY)}}
+   onPointerMove={e=>{if(!running)return;if(e.pointerType==="mouse"||pointer.current.active)setPointerTarget(e.clientX,e.clientY)}}
+   onPointerDown={e=>{if(!running)return;pointer.current={active:true,id:e.pointerId};if(e.pointerType!=="mouse")e.currentTarget.setPointerCapture(e.pointerId);setPointerTarget(e.clientX,e.clientY)}}
+   onPointerUp={e=>{if(pointer.current.id===e.pointerId){pointer.current={active:false,id:null};if(e.pointerType!=="mouse")targetRef.current.active=false}}}
+   onPointerCancel={e=>{if(pointer.current.id===e.pointerId){pointer.current={active:false,id:null};targetRef.current.active=false}}}
+   onPointerLeave={e=>{if(e.pointerType==="mouse")targetRef.current.active=false}}>
+   {!running&&!over&&<div className="gameStartLayer"><b>DON'T GET HIT</b><p>Your tiny player follows your cursor freely anywhere in the arena. No clicking needed on desktop; touch and drag on mobile.</p><button onClick={reset}>Start Dodge</button></div>}
    <div ref={playerEl} className="dodgePlayer" style={{left:"50%",top:"78%"}}><i/></div>
    {hazards.map(h=><div key={h.id} className={`mcHazard mc-${h.kind}`} style={{left:`${h.x}%`,top:`${h.y}%`,width:`${h.size}%`,aspectRatio:"1",transform:`translate(-50%,-50%) rotate(${h.spin}deg)`}}><span>{h.glyph}</span></div>)}
   </div>
-  <p className="gameHint">Use the entire arena. Minecraft-inspired blocks and items now attack from all four sides, getting faster and denser as your score climbs.</p>
+  <p className="gameHint">Move your cursor anywhere inside the arena and your player smoothly follows it. On mobile, touch and drag. Minecraft-inspired hazards attack from all four sides.</p>
   {over&&<div className="mergeGameOverBackdrop"><div className="mergeGameOverModal"><span>ORVEN DODGE</span><h2>You got hit!</h2><p>Your final score is <b>{score.toLocaleString()}</b>.</p><div><button className="mergeDone" onClick={onMenu}>Main Menu</button><button className="mergeAgain" onClick={reset}>Play Again</button></div></div></div>}
  </div>
 }
